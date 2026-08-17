@@ -14,7 +14,8 @@ import {
   Sparkles,
   CalendarRange,
   Pencil,
-  UserPlus,
+  UserCog,
+  Megaphone,
   Trash2,
   Ban,
   Loader2,
@@ -22,14 +23,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   EqubDetail,
   DrawsData,
   MemberRow,
   getEqubDetail,
   getDraws,
-  addMember,
+  adminUpdateMember,
+  notifyMembers,
   removeMember,
   updateEqub,
   closeEqub,
@@ -37,7 +39,8 @@ import {
 } from "@/lib/api";
 import { mockLotteryColors } from "@/lib/mock-data";
 import { ThisMonthTab } from "./this-month-tab";
-import { AddMemberModal } from "./add-member-modal";
+import { MemberEditModal } from "./member-edit-modal";
+import { NotifyMembersModal } from "./notify-members-modal";
 import { ShareInviteModal } from "./share-invite-modal";
 import { EditEqubModal } from "./edit-equb-modal";
 import { ConfirmDialog } from "./confirm-dialog";
@@ -71,12 +74,15 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [removingMember, setRemovingMember] = useState<DetailMember | null>(null);
+  const [editingMember, setEditingMember] = useState<DetailMember | null>(null);
+  const [savingMember, setSavingMember] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [sendingNotify, setSendingNotify] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const reload = useCallback(() => {
@@ -128,21 +134,31 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const allDrawn = draws?.allDrawn ?? false;
   const totalMembers = draws?.total ?? drawResults.length;
 
-  const handleAddMember = (member: {
-    fullName: string;
-    username: string;
-    account: { provider: string; number: string };
+  const handleSaveMember = (data: {
+    fullName?: string;
+    phone?: string;
+    accountProvider?: string;
+    accountNumber?: string;
+    accountHolderName?: string;
+    contributionAmount?: number;
   }) => {
-    setBusy(true);
-    addMember(equbId, {
-      fullName: member.fullName,
-      telegramUsername: member.username.replace("@", ""),
-      accountProvider: member.account.provider,
-      accountNumber: member.account.number,
-    })
-      .then(reload)
-      .catch((err) => console.error("Failed to add member", err))
-      .finally(() => setBusy(false));
+    if (!editingMember) return;
+    setSavingMember(true);
+    adminUpdateMember(equbId, editingMember.id, data)
+      .then(() => {
+        reload();
+        setEditingMember(null);
+      })
+      .catch((err) => console.error("Failed to update member", err))
+      .finally(() => setSavingMember(false));
+  };
+
+  const handleSendNotify = (data: { title: string; message: string }) => {
+    setSendingNotify(true);
+    notifyMembers(equbId, data)
+      .then(() => setNotifyOpen(false))
+      .catch((err) => console.error("Failed to send notification", err))
+      .finally(() => setSendingNotify(false));
   };
 
   const handleRemoveMember = (member: DetailMember) => {
@@ -196,11 +212,6 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           <ArrowLeft />
         </Button>
         <h1 className="flex-1 truncate text-lg font-bold">Equb Details</h1>
-        {isAdmin && (
-          <Button variant="ghost" size="icon-sm" onClick={() => setEditOpen(true)} disabled={busy}>
-            <Pencil />
-          </Button>
-        )}
       </header>
 
       <div className="flex flex-col gap-4 p-4">
@@ -208,7 +219,20 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         <div className="rounded-2xl border border-border bg-card p-5 shadow-xs">
           <div className="mb-2 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h2 className="text-xl font-bold">{equb.name}</h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="truncate text-xl font-bold">{equb.name}</h2>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="Edit equb"
+                    onClick={() => setEditOpen(true)}
+                    disabled={busy}
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                )}
+              </div>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 by @{equb.admin.telegramUsername} · Round {equb.currentRound}/{equb.durationMonths}
               </p>
@@ -217,7 +241,14 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
               <Badge variant={equb.isPublic ? "default" : "secondary"}>
                 {equb.isPublic ? "Public" : "Private"}
               </Badge>
-              <Badge variant={equb.status === "active" ? "secondary" : "outline"}>
+              <Badge
+                variant="outline"
+                className={
+                  equb.status === "active"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+                    : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
+                }
+              >
                 {equb.status === "active" ? "Active" : "Completed"}
               </Badge>
             </div>
@@ -310,8 +341,8 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                     <Users className="size-4" /> {members.length}
                   </span>
                   {isAdmin && (
-                    <Button size="sm" onClick={() => setAddMemberOpen(true)} disabled={busy}>
-                      <UserPlus /> Add
+                    <Button size="sm" variant="outline" onClick={() => setNotifyOpen(true)} disabled={busy}>
+                      <Megaphone /> Notify
                     </Button>
                   )}
                 </div>
@@ -364,6 +395,17 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                         <span className="shrink-0 text-xs text-muted-foreground">
                           No month yet
                         </span>
+                      )}
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={`Edit ${m.fullName}`}
+                          onClick={() => setEditingMember(m)}
+                          disabled={busy}
+                        >
+                          <UserCog />
+                        </Button>
                       )}
                       {isAdmin && !m.isAdmin && (
                         <Button
@@ -475,10 +517,18 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
       </div>
 
       {/* Modals */}
-      <AddMemberModal
-        open={addMemberOpen}
-        onClose={() => setAddMemberOpen(false)}
-        onAdd={handleAddMember}
+      <MemberEditModal
+        open={editingMember !== null}
+        member={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSave={handleSaveMember}
+        saving={savingMember}
+      />
+      <NotifyMembersModal
+        open={notifyOpen}
+        onClose={() => setNotifyOpen(false)}
+        onSend={handleSendNotify}
+        sending={sendingNotify}
       />
       <ShareInviteModal
         open={shareOpen}

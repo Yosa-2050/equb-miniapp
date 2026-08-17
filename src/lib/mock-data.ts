@@ -11,12 +11,3 @@ export const mockLotteryColors = [
   "#06b6d4",
   "#84cc16",
 ];
-
-// Shared type for a member row used across the Equb details / management UI.
-export interface EqubMemberRow {
-  id: string;
-  number: number;
-  fullName: string;
-  username: string;
-  account: { provider: string; number: string };
-}

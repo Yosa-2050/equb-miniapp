@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Users, ChevronRight, UserPlus, LogIn, Loader2 } from "lucide-react";
+import { Plus, Users, Crown, Wallet, UserPlus, LogIn, Loader2 } from "lucide-react";
 import { Equb, getMyEqubs, getPublicEqubs } from "@/lib/api";
 
 export default function HomePage() {
@@ -111,24 +111,29 @@ function EqubCard({ equb }: { equb: Equb }) {
   return (
     <Link href={`/Equb/${equb.id}`}>
       <Card className="w-full transition-colors hover:bg-muted/40">
-        <CardContent className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="font-semibold text-base">{equb.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              Monthly: {equb.monthlyAmount.toLocaleString()} ETB
-            </p>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="min-w-0 truncate font-semibold text-base">{equb.name}</h3>
+            <Badge variant={equb.isPublic ? "default" : "secondary"} className="shrink-0">
+              {equb.isPublic ? "Public" : "Private"}
+            </Badge>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="flex flex-col items-end gap-1">
-              <Badge variant={equb.isPublic ? "default" : "secondary"}>
-                {equb.isPublic ? "Public" : "Private"}
-              </Badge>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Users className="size-3.5" /> {equb.membersCount}
-              </span>
-            </div>
-            <ChevronRight className="size-4 text-muted-foreground" />
+
+          <p className="flex items-center gap-1 text-sm text-muted-foreground">
+            @{equb.admin.telegramUsername || "—"}
+            <Crown className="size-3.5 text-amber-500" />
+          </p>
+
+          <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 py-2.5">
+            <Wallet className="size-4 text-primary" />
+            <span className="font-semibold text-primary">
+              {equb.monthlyAmount.toLocaleString()} ETB
+            </span>
           </div>
+
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Users className="size-4" /> {equb.membersCount} Members
+          </p>
         </CardContent>
       </Card>
     </Link>
