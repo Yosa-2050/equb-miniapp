@@ -9,15 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Users, ChevronRight, UserPlus, LogIn, Loader2 } from "lucide-react";
-import { Equb, getMyEqubs, getPublicEqubs, createEqub } from "@/lib/api";
-import { CreateEqubModal } from "../Equb/create-equb-modal";
+import { Equb, getMyEqubs, getPublicEqubs } from "@/lib/api";
 
 export default function HomePage() {
   const router = useRouter();
   const [myEqubs, setMyEqubs] = useState<Equb[]>([]);
   const [publicEqubs, setPublicEqubs] = useState<Equb[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
 
   useEffect(() => {
@@ -31,28 +29,6 @@ export default function HomePage() {
       })
       .finally(() => setLoading(false));
   }, []);
-
-  const reload = () => {
-    Promise.all([getMyEqubs(), getPublicEqubs()]).then(([mine, pub]) => {
-      setMyEqubs(mine);
-      setPublicEqubs(pub);
-    });
-  };
-
-  const handleCreate = (data: {
-    name: string;
-    monthlyAmount: number;
-    durationMonths: number;
-    totalAmount: number;
-    isPublic: boolean;
-  }) => {
-    createEqub(data)
-      .then((equb) => {
-        reload();
-        router.push(`/Equb/${equb.id}`);
-      })
-      .catch((err) => console.error("Failed to create equb", err));
-  };
 
   return (
     <div className="p-4">
@@ -120,18 +96,12 @@ export default function HomePage() {
 
       {/* Floating Action Button (To create new Equb) */}
       <button
-        onClick={() => setModalOpen(true)}
+        onClick={() => router.push("/Equb/create")}
         className="fixed bottom-20 right-6 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90"
         aria-label="Create Equb"
       >
         <Plus size={28} />
       </button>
-
-      <CreateEqubModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreate={handleCreate}
-      />
     </div>
   );
 }
