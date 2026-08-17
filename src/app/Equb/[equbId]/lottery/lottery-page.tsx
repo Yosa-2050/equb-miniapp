@@ -2,10 +2,27 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, RotateCw, Trophy, CheckCircle2, Loader2 } from "lucide-react";
+import { io, Socket } from "socket.io-client";
+import {
+  ArrowLeft,
+  RotateCw,
+  Trophy,
+  CheckCircle2,
+  Loader2,
+  Radio,
+  Megaphone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { DrawResult, getDraws, spinLottery } from "@/lib/api";
+import {
+  API_BASE,
+  DrawResult,
+  announceLottery,
+  getDraws,
+  getEqubDetail,
+  getToken,
+  spinLottery,
+} from "@/lib/api";
 import { mockLotteryColors } from "@/lib/mock-data";
 
 const COLORS = mockLotteryColors;
@@ -33,21 +50,80 @@ function segmentPath(start: number, end: number, radius: number) {
 export default function LotteryPage({ equbId }: { equbId: string }) {
   const router = useRouter();
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [connected, setConnected] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState<(DrawResult & { rosterNumber: number }) | null>(null);
   const [members, setMembers] = useState<DrawResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [announcing, setAnnouncing] = useState(false);
+  const [announced, setAnnounced] = useState(false);
+
+  const socketRef = useRef<Socket | null>(null);
+  const pendingLocalSpin = useRef(false);
+  const targetRef = useRef<(DrawResult & { rosterNumber: number }) | null>(null);
+  const membersRef = useRef<DrawResult[]>([]);
+  membersRef.current = members;
 
   useEffect(() => {
-    getDraws(equbId)
-      .then((d) => setMembers(d.results))
+    Promise.all([getDraws(equbId), getEqubDetail(equbId)])
+      .then(([draws, detail]) => {
+        setMembers(draws.results);
+        setIsAdmin(detail.isAdmin);
+      })
       .catch((err) => console.error("Failed to load draws", err))
       .finally(() => setLoading(false));
   }, [equbId]);
 
   const N = members.length;
   const SEG = N > 0 ? SEG_BASE / N : SEG_BASE;
+
+  const applyResult = (result: DrawResult) => {
+    const current = membersRef.current;
+    const idx = current.findIndex((m) => m.memberId === result.memberId);
+    const rosterNumber = idx >= 0 ? idx + 1 : current.length;
+    const withRoster = { ...result, rosterNumber };
+
+    targetRef.current = withRoster;
+    setWinner(withRoster);
+    setSpinning(true);
+
+    const mid = rosterNumber * SEG - SEG / 2;
+    const revolutions = 5;
+    setRotation((rot) => rot + revolutions * 360 + (360 - mid));
+  };
+
+  // Live sync: everyone on this page joins a room for this equb and sees
+  // spins pushed the instant the admin triggers them.
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    const socket = io(`${API_BASE}/lottery`, { auth: { token } });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      setConnected(true);
+      socket.emit("joinEqubRoom", equbId);
+    });
+    socket.on("disconnect", () => setConnected(false));
+
+    socket.on("spin", (result: DrawResult) => {
+      if (pendingLocalSpin.current) {
+        // We're the admin and already animated this from our own REST call.
+        pendingLocalSpin.current = false;
+        return;
+      }
+      applyResult(result);
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [equbId]);
 
   const remaining = useMemo(
     () => members.filter((m) => m.month === null),
@@ -56,30 +132,26 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
 
   const completed = N > 0 && remaining.length === 0;
 
-  const targetRef = useRef<(DrawResult & { rosterNumber: number }) | null>(null);
-
   const handleSpin = () => {
     if (spinning || completed || remaining.length === 0 || loading) return;
 
-    setSpinning(true);
     setWinner(null);
+    pendingLocalSpin.current = true;
 
     spinLottery(equbId)
-      .then((result) => {
-        const idx = members.findIndex((m) => m.memberId === result.memberId);
-        const rosterNumber = idx >= 0 ? idx + 1 : members.length;
-        targetRef.current = { ...result, rosterNumber };
-        setWinner({ ...result, rosterNumber });
-
-        // winner's segment center should land at the pointer (top, 0deg)
-        const mid = rosterNumber * SEG - SEG / 2;
-        const revolutions = 5;
-        setRotation((rot) => rot + revolutions * 360 + (360 - mid));
-      })
+      .then((result) => applyResult(result))
       .catch((err) => {
         console.error("Spin failed", err);
-        setSpinning(false);
+        pendingLocalSpin.current = false;
       });
+  };
+
+  const handleAnnounce = () => {
+    setAnnouncing(true);
+    announceLottery(equbId)
+      .then(() => setAnnounced(true))
+      .catch((err) => console.error("Failed to announce lottery", err))
+      .finally(() => setAnnouncing(false));
   };
 
   const handleAnimationEnd = () => {
@@ -112,6 +184,11 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
           <ArrowLeft />
         </Button>
         <h1 className="flex-1 truncate text-lg font-bold">Equb Lottery</h1>
+        {connected && (
+          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+            <Radio className="size-3.5" /> Live
+          </span>
+        )}
         {completed && (
           <span className="text-xs font-medium text-emerald-600">Completed</span>
         )}
@@ -124,6 +201,22 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
           </p>
         ) : (
           <>
+            {isAdmin && !completed && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleAnnounce}
+                disabled={announcing || announced}
+              >
+                <Megaphone />{" "}
+                {announcing
+                  ? "Announcing…"
+                  : announced
+                    ? "Members Notified"
+                    : "Announce Live Lottery"}
+              </Button>
+            )}
+
             {/* Wheel */}
             <div className="relative mt-2">
               {/* Pointer at the top */}
@@ -204,22 +297,28 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 <p className="text-sm text-muted-foreground">
                   All months have been assigned. Lottery complete!
                 </p>
-              ) : (
+              ) : isAdmin ? (
                 <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <RotateCw className="size-4" /> Press Spin to draw the next month
+                </p>
+              ) : (
+                <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Radio className="size-4" /> Waiting for the admin to spin…
                 </p>
               )}
             </div>
 
-            {/* Spin button */}
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleSpin}
-              disabled={spinning || completed}
-            >
-              {spinning ? "Spinning..." : completed ? "Lottery Done" : "Spin the Wheel"}
-            </Button>
+            {/* Spin button: admin only. Members just watch it happen live. */}
+            {isAdmin && (
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleSpin}
+                disabled={spinning || completed}
+              >
+                {spinning ? "Spinning..." : completed ? "Lottery Done" : "Spin the Wheel"}
+              </Button>
+            )}
 
             {/* Results list: members with their assigned equb month */}
             <section className="w-full">

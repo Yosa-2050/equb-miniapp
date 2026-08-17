@@ -31,7 +31,12 @@ export interface MemberRow {
   telegramUsername: string;
   role: "admin" | "member";
   order: number | null;
-  account: { provider: string | null; number: string | null };
+  contributionAmount: number | null;
+  account: {
+    provider: string | null;
+    number: string | null;
+    holderName: string | null;
+  };
 }
 
 export interface EqubDetail extends Equb {
@@ -123,7 +128,7 @@ export class ApiError extends Error {
 
 // ---- Auth plumbing ----
 
-function getToken(): string | null {
+export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
 }
@@ -265,18 +270,33 @@ export const joinEqub = (id: string) =>
   apiFetch<object>(`/equb/${id}/join`, { method: "POST" });
 export const joinEqubByInvite = (id: string) =>
   apiFetch<object>(`/equb/${id}/join/invite`, { method: "POST" });
-export const addMember = (
-  equbId: string,
-  data: {
-    fullName: string;
-    telegramUsername?: string;
-    accountProvider?: string;
-    accountNumber?: string;
-  },
-) => apiFetch<object>(`/equb/${equbId}/members`, { method: "POST", body: data });
 export const removeMember = (equbId: string, memberId: string) =>
   apiFetch<{ success: boolean }>(`/equb/${equbId}/members/${memberId}`, {
     method: "DELETE",
+  });
+export const adminUpdateMember = (
+  equbId: string,
+  memberId: string,
+  data: {
+    fullName?: string;
+    phone?: string;
+    accountProvider?: string;
+    accountNumber?: string;
+    accountHolderName?: string;
+    contributionAmount?: number;
+  },
+) =>
+  apiFetch<MemberRow>(`/equb/${equbId}/members/${memberId}`, {
+    method: "PATCH",
+    body: data,
+  });
+export const notifyMembers = (
+  equbId: string,
+  data: { title: string; message: string },
+) =>
+  apiFetch<{ notifiedCount: number }>(`/equb/${equbId}/notify`, {
+    method: "POST",
+    body: data,
   });
 
 // ---- Lottery ----
@@ -285,6 +305,10 @@ export const getDraws = (equbId: string) =>
   apiFetch<DrawsData>(`/equb/${equbId}/lottery`);
 export const spinLottery = (equbId: string) =>
   apiFetch<DrawResult>(`/equb/${equbId}/lottery/spin`, { method: "POST" });
+export const announceLottery = (equbId: string) =>
+  apiFetch<{ notifiedCount: number }>(`/equb/${equbId}/lottery/announce`, {
+    method: "POST",
+  });
 
 // ---- Payments ----
 
