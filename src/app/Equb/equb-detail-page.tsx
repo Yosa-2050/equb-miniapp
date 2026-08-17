@@ -120,7 +120,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const isAdmin = equb.isAdmin;
   const members: DetailMember[] = equb.members.map((m) => ({
     ...m,
-    isAdmin: m.role === "ADMIN",
+    isAdmin: m.role === "admin",
   }));
 
   const drawResults = draws?.results ?? [];

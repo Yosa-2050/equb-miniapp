@@ -32,9 +32,9 @@ const paidLabel: Record<
   PaymentStatus,
   { text: string; icon: typeof Clock; className: string }
 > = {
-  PAID: { text: "Paid", icon: CheckCircle2, className: "text-emerald-600" },
-  PENDING: { text: "Pending", icon: Clock, className: "text-amber-600" },
-  REJECTED: { text: "Rejected", icon: XCircle, className: "text-destructive" },
+  paid: { text: "Paid", icon: CheckCircle2, className: "text-emerald-600" },
+  pending: { text: "Pending", icon: Clock, className: "text-amber-600" },
+  rejected: { text: "Rejected", icon: XCircle, className: "text-destructive" },
 };
 
 export function ThisMonthTab({
@@ -251,7 +251,7 @@ export function ThisMonthTab({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1.5">
-                  {payment.status === "PAID" && (
+                  {payment.status === "paid" && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -260,7 +260,7 @@ export function ThisMonthTab({
                       <Eye /> Receipt
                     </Button>
                   )}
-                  {isRecipient && payment.status !== "PAID" && (
+                  {isRecipient && payment.status !== "paid" && (
                     <>
                       <Button size="sm" onClick={() => decide(payment.id, true)} disabled={busy}>
                         <Check /> Received
@@ -333,7 +333,7 @@ export function ThisMonthTab({
                       <span className="font-medium">{payment.receiptDate ?? "—"}</span>
                     </p>
                   </div>
-                  {isRecipient && payment.status !== "PAID" && (
+                  {isRecipient && payment.status !== "paid" && (
                     <div className="mt-4 grid grid-cols-2 gap-2">
                       <Button
                         onClick={() => {

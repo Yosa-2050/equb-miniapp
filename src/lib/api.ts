@@ -29,7 +29,7 @@ export interface MemberRow {
   number: number;
   fullName: string;
   telegramUsername: string;
-  role: "ADMIN" | "MEMBER";
+  role: "admin" | "member";
   order: number | null;
   account: { provider: string | null; number: string | null };
 }
@@ -59,7 +59,7 @@ export interface DrawsData {
   results: DrawResult[];
 }
 
-export type PaymentStatus = "PAID" | "PENDING" | "REJECTED";
+export type PaymentStatus = "paid" | "pending" | "rejected";
 
 export interface PaymentRow {
   id: string;
