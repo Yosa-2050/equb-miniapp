@@ -317,15 +317,19 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                 </div>
               </div>
 
-              <div className="mb-4 flex items-center">
-                <AvatarGroup>
-                  {members.slice(0, 4).map((m) => (
-                    <Avatar key={m.id}>
-                      <AvatarFallback>{initials(m.fullName)}</AvatarFallback>
-                    </Avatar>
-                  ))}
-                  <AvatarGroupCount />
-                </AvatarGroup>
+                           <div className="mb-4 flex items-center -space-x-2">
+                {members.slice(0, 4).map((m) => (
+                  <Avatar key={m.id} className="border-2 border-background">
+                    <AvatarFallback className="text-xs">
+                      {initials(m.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {members.length > 4 && (
+                  <div className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-muted text-xs font-medium">
+                    +{members.length - 4}
+                  </div>
+                )}
               </div>
 
               <ul className="flex flex-col gap-2">
