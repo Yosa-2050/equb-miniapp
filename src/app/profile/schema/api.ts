@@ -1,8 +1,11 @@
-import { getProfile as apiGetProfile, type Profile as ApiProfile } from "@/lib/api";
+import {
+  getProfile as apiGetProfile,
+  updateProfile as apiUpdateProfile,
+  type Profile as ApiProfile,
+} from "@/lib/api";
 import type { Profile } from "./type";
 
-export const getProfile = async (): Promise<Profile> => {
-  const p: ApiProfile = await apiGetProfile();
+function toProfile(p: ApiProfile): Profile {
   return {
     id: p.id,
     fullName: p.fullName,
@@ -13,4 +16,17 @@ export const getProfile = async (): Promise<Profile> => {
     joinedEqubs: p.joinedEqubs,
     totalSaved: p.totalSaved,
   };
+}
+
+export const getProfile = async (): Promise<Profile> => {
+  const p: ApiProfile = await apiGetProfile();
+  return toProfile(p);
+};
+
+export const updateProfile = async (data: {
+  fullName: string;
+  phone: string;
+}): Promise<Profile> => {
+  const p: ApiProfile = await apiUpdateProfile(data);
+  return toProfile(p);
 };

@@ -342,3 +342,5 @@ export const markNotificationRead = (id: string) =>
 // ---- Profile ----
 
 export const getProfile = () => apiFetch<Profile>("/profile");
+export const updateProfile = (data: { fullName?: string; phone?: string }) =>
+  apiFetch<Profile>("/profile", { method: "PATCH", body: data });
