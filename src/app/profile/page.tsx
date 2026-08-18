@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, MapPin, UserRound, Wallet, Users } from "lucide-react";
+import { Loader2, MapPin, Pencil, UserRound, Wallet, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getProfile } from "./schema/api";
+import { Button } from "@/components/ui/button";
+import { getProfile, updateProfile } from "./schema/api";
 import type { Profile } from "./schema/type";
+import { EditProfileModal } from "./edit-profile-modal";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     getProfile()
@@ -18,6 +22,17 @@ export default function ProfilePage() {
         setError(err instanceof Error ? err.message : "Failed to load profile");
       });
   }, []);
+
+  const handleSave = (data: { fullName: string; phone: string }) => {
+    setSaving(true);
+    updateProfile(data)
+      .then((p) => {
+        setProfile(p);
+        setEditOpen(false);
+      })
+      .catch((err) => console.error("Failed to update profile", err))
+      .finally(() => setSaving(false));
+  };
 
   if (error) {
     return (
@@ -44,8 +59,11 @@ export default function ProfilePage() {
 
   return (
     <div className="p-4">
-      <header className="mb-6">
+      <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Profile</h1>
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil /> Edit
+        </Button>
       </header>
 
       {/* User info card */}
@@ -92,6 +110,17 @@ export default function ProfilePage() {
           <p className="font-bold">{profile.totalSaved.toLocaleString()} ETB</p>
         </div>
       </div>
+
+      <EditProfileModal
+        open={editOpen}
+        initial={{
+          fullName: profile.fullName,
+          phone: profile.phone === "Not set" ? "" : profile.phone,
+        }}
+        onClose={() => setEditOpen(false)}
+        onSave={handleSave}
+        saving={saving}
+      />
     </div>
   );
 }
