@@ -25,7 +25,7 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-lg">
         <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-destructive/10">
           <AlertTriangle className="size-6 text-destructive" />
