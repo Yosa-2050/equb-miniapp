@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select } from "@/components/ui/select";
 import type { EqubFrequency } from "@/lib/api";
-import { periodLabel } from "@/lib/period-label";
+import { periodLabel, amountFieldLabel } from "@/lib/period-label";
 import { ReminderScheduleFields } from "./reminder-schedule-fields";
 
 interface EditEqubModalProps {
@@ -130,7 +131,20 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-amount">Monthly Amount (ETB)</Label>
+          <Label htmlFor="edit-frequency">Frequency</Label>
+          <Select
+            id="edit-frequency"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as EqubFrequency)}
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="edit-amount">{amountFieldLabel(frequency)}</Label>
           <Input
             id="edit-amount"
             required
@@ -167,7 +181,6 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
 
         <ReminderScheduleFields
           frequency={frequency}
-          onFrequencyChange={setFrequency}
           maxMembers={maxMembers}
           onMaxMembersChange={setMaxMembers}
           reminderTime={reminderTime}

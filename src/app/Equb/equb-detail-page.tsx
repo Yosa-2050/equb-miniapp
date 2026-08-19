@@ -20,6 +20,7 @@ import {
   Ban,
   Loader2,
   Users2,
+  UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import {
   deleteEqub,
   createCollabGroup,
   dissolveCollabGroup,
+  joinEqub,
   ApiError,
 } from "@/lib/api";
 import { mockLotteryColors } from "@/lib/mock-data";
@@ -91,6 +93,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
   const [groupError, setGroupError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
 
   const reload = useCallback(() => {
     Promise.all([getEqubDetail(equbId), getDraws(equbId)])
@@ -245,6 +248,14 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
       .finally(() => setSavingGroup(false));
   };
 
+  const handleJoin = () => {
+    setJoining(true);
+    joinEqub(equbId)
+      .then(reload)
+      .catch((err) => console.error("Failed to join equb", err))
+      .finally(() => setJoining(false));
+  };
+
   const handleDissolveGroup = (groupId: string) => {
     setBusy(true);
     dissolveCollabGroup(equbId, groupId)
@@ -342,22 +353,49 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           {equb.description && <p className="text-sm text-muted-foreground">{equb.description}</p>}
 
           <div className="mt-4 flex flex-col gap-2">
-            <Button
-              variant="outline"
-              className="w-full"
-              size="lg"
-              onClick={() => setShareOpen(true)}
-            >
-              <Link2 /> {equb.inviteCode}
-            </Button>
-            <Button
-              variant="default"
-              className="w-full"
-              size="lg"
-              onClick={() => setShareOpen(true)}
-            >
-              <Share2 /> Share Invite Link
-            </Button>
+            {equb.isPublic ? (
+              !equb.isMember && (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleJoin}
+                  disabled={joining || equb.isFull}
+                >
+                  {joining ? (
+                    <>
+                      <Loader2 className="animate-spin" /> Joining…
+                    </>
+                  ) : equb.isFull ? (
+                    "Equb is full"
+                  ) : (
+                    <>
+                      <UserPlus /> Join Equb
+                    </>
+                  )}
+                </Button>
+              )
+            ) : (
+              !equb.isFull && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={() => setShareOpen(true)}
+                  >
+                    <Link2 /> {equb.inviteCode}
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="w-full"
+                    size="lg"
+                    onClick={() => setShareOpen(true)}
+                  >
+                    <Share2 /> Share Invite Link
+                  </Button>
+                </>
+              )
+            )}
           </div>
 
           {isAdmin && (

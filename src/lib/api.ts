@@ -35,6 +35,7 @@ export interface MemberRow {
   number: number;
   fullName: string;
   telegramUsername: string;
+  phone: string | null;
   role: "admin" | "member";
   order: number | null;
   contributionAmount: number | null;

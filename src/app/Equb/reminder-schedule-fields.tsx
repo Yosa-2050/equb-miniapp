@@ -17,7 +17,6 @@ const WEEKDAYS = [
 
 interface ReminderScheduleFieldsProps {
   frequency: EqubFrequency;
-  onFrequencyChange: (value: EqubFrequency) => void;
   maxMembers: string;
   onMaxMembersChange: (value: string) => void;
   reminderTime: string;
@@ -30,7 +29,6 @@ interface ReminderScheduleFieldsProps {
 
 export function ReminderScheduleFields({
   frequency,
-  onFrequencyChange,
   maxMembers,
   onMaxMembersChange,
   reminderTime,
@@ -42,19 +40,6 @@ export function ReminderScheduleFields({
 }: ReminderScheduleFieldsProps) {
   return (
     <>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="equb-frequency">Frequency</Label>
-        <Select
-          id="equb-frequency"
-          value={frequency}
-          onChange={(e) => onFrequencyChange(e.target.value as EqubFrequency)}
-        >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </Select>
-      </div>
-
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="equb-max-members">Max Members (optional)</Label>
         <Input

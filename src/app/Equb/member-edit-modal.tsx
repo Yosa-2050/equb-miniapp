@@ -33,7 +33,7 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
   useEffect(() => {
     if (open && member) {
       setFullName(member.fullName ?? "");
-      setPhone("");
+      setPhone(member.phone ?? "");
       setAccountProvider(member.account.provider ?? "");
       setAccountNumber(member.account.number ?? "");
       setAccountHolderName(member.account.holderName ?? "");

@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { createEqub, type EqubFrequency } from "@/lib/api";
-import { periodLabel } from "@/lib/period-label";
+import { periodLabel, amountFieldLabel } from "@/lib/period-label";
 import { ReminderScheduleFields } from "../reminder-schedule-fields";
 
 export default function CreateEqubPage() {
@@ -85,7 +86,20 @@ export default function CreateEqubPage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="equb-amount">Monthly Amount (ETB)</Label>
+          <Label htmlFor="equb-frequency">Frequency</Label>
+          <Select
+            id="equb-frequency"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as EqubFrequency)}
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="equb-amount">{amountFieldLabel(frequency)}</Label>
           <Input
             id="equb-amount"
             required
@@ -125,7 +139,6 @@ export default function CreateEqubPage() {
 
         <ReminderScheduleFields
           frequency={frequency}
-          onFrequencyChange={setFrequency}
           maxMembers={maxMembers}
           onMaxMembersChange={setMaxMembers}
           reminderTime={reminderTime}
