@@ -9,6 +9,7 @@ const TOKEN_KEY = "equb_token";
 // ---- Types (mirror the backend response shapes) ----
 
 export type EqubStatus = "active" | "completed";
+export type EqubFrequency = "daily" | "weekly" | "monthly";
 
 export interface Equb {
   id: string;
@@ -16,13 +17,18 @@ export interface Equb {
   monthlyAmount: number;
   totalAmount: number;
   durationMonths: number;
+  frequency: EqubFrequency;
+  maxMembers: number | null;
   inviteCode: string;
   status: EqubStatus;
   isPublic: boolean;
   admin: { id: string; fullName: string; telegramUsername: string };
   membersCount: number;
+  isFull: boolean;
   createdAt: string;
 }
+
+export type CollabRole = "leader" | "member";
 
 export interface MemberRow {
   id: string;
@@ -32,6 +38,8 @@ export interface MemberRow {
   role: "admin" | "member";
   order: number | null;
   contributionAmount: number | null;
+  collabGroupId: string | null;
+  collabRole: CollabRole | null;
   account: {
     provider: string | null;
     number: string | null;
@@ -39,14 +47,26 @@ export interface MemberRow {
   };
 }
 
+export interface CollabGroupInfo {
+  id: string;
+  label: string;
+  leaderMemberId: string;
+  memberIds: string[];
+}
+
 export interface EqubDetail extends Equb {
   totalPot: number;
   description: string | null;
   currentRound: number;
   nextDrawDate: string | null;
+  periodStartedAt: string | null;
+  reminderTime: string | null;
+  reminderDayOfWeek: number | null;
+  reminderDayOfMonth: number | null;
   isAdmin: boolean;
   isMember: boolean;
   members: MemberRow[];
+  collabGroups: CollabGroupInfo[];
 }
 
 export interface DrawResult {
@@ -55,6 +75,8 @@ export interface DrawResult {
   fullName: string;
   telegramUsername: string;
   month: number | null;
+  isGroup?: boolean;
+  groupMembers?: { memberId: string; fullName: string }[];
 }
 
 export interface DrawsData {
@@ -64,7 +86,7 @@ export interface DrawsData {
   results: DrawResult[];
 }
 
-export type PaymentStatus = "paid" | "pending" | "rejected";
+export type PaymentStatus = "paid" | "pending" | "rejected" | "late";
 
 export interface PaymentRow {
   id: string;
@@ -76,6 +98,17 @@ export interface PaymentRow {
   receiptDate: string | null;
 }
 
+export interface PayoutSplit {
+  totalPot: number;
+  leaderMemberId: string;
+  splits: {
+    memberId: string;
+    fullName: string;
+    contributionAmount: number;
+    share: number;
+  }[];
+}
+
 export interface MonthData {
   equbId: string;
   month: number;
@@ -85,8 +118,10 @@ export interface MonthData {
     memberId: string;
     fullName: string;
     telegramUsername: string;
+    isGroup?: boolean;
     account: { provider: string | null; number: string | null };
   } | null;
+  payoutSplit: PayoutSplit | null;
   collected: number;
   totalMembers: number;
   paidCount: number;
@@ -248,6 +283,11 @@ export const createEqub = (data: {
   monthlyAmount: number;
   durationMonths: number;
   totalAmount: number;
+  frequency?: EqubFrequency;
+  maxMembers?: number;
+  reminderTime?: string;
+  reminderDayOfWeek?: number;
+  reminderDayOfMonth?: number;
   isPublic: boolean;
   description?: string;
 }) => apiFetch<Equb>("/equb", { method: "POST", body: data });
@@ -258,6 +298,11 @@ export const updateEqub = (
     monthlyAmount?: number;
     durationMonths?: number;
     totalAmount?: number;
+    frequency?: EqubFrequency;
+    maxMembers?: number;
+    reminderTime?: string;
+    reminderDayOfWeek?: number;
+    reminderDayOfMonth?: number;
     isPublic?: boolean;
     description?: string;
   },
@@ -297,6 +342,22 @@ export const notifyMembers = (
   apiFetch<{ notifiedCount: number }>(`/equb/${equbId}/notify`, {
     method: "POST",
     body: data,
+  });
+export const createCollabGroup = (
+  equbId: string,
+  data: {
+    name?: string;
+    members: { memberId: string; contributionAmount: number }[];
+    leaderMemberId: string;
+  },
+) =>
+  apiFetch<CollabGroupInfo>(`/equb/${equbId}/collab-groups`, {
+    method: "POST",
+    body: data,
+  });
+export const dissolveCollabGroup = (equbId: string, groupId: string) =>
+  apiFetch<{ success: boolean }>(`/equb/${equbId}/collab-groups/${groupId}`, {
+    method: "DELETE",
   });
 
 // ---- Lottery ----

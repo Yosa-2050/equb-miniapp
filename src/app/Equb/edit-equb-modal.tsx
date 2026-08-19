@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import type { EqubFrequency } from "@/lib/api";
+import { periodLabel } from "@/lib/period-label";
+import { ReminderScheduleFields } from "./reminder-schedule-fields";
 
 interface EditEqubModalProps {
   open: boolean;
@@ -14,6 +17,11 @@ interface EditEqubModalProps {
     monthlyAmount: number;
     durationMonths: number;
     totalAmount: number;
+    frequency: EqubFrequency;
+    maxMembers: number | null;
+    reminderTime: string | null;
+    reminderDayOfWeek: number | null;
+    reminderDayOfMonth: number | null;
     isPublic: boolean;
   };
   onClose: () => void;
@@ -22,6 +30,11 @@ interface EditEqubModalProps {
     monthlyAmount: number;
     durationMonths: number;
     totalAmount: number;
+    frequency: EqubFrequency;
+    maxMembers?: number;
+    reminderTime?: string;
+    reminderDayOfWeek?: number;
+    reminderDayOfMonth?: number;
     isPublic: boolean;
   }) => void;
 }
@@ -31,6 +44,17 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
   const [monthlyAmount, setMonthlyAmount] = useState(String(initial.monthlyAmount));
   const [durationMonths, setDurationMonths] = useState(String(initial.durationMonths));
   const [totalAmount, setTotalAmount] = useState(String(initial.totalAmount));
+  const [frequency, setFrequency] = useState<EqubFrequency>(initial.frequency);
+  const [maxMembers, setMaxMembers] = useState(
+    initial.maxMembers != null ? String(initial.maxMembers) : "",
+  );
+  const [reminderTime, setReminderTime] = useState(initial.reminderTime ?? "");
+  const [reminderDayOfWeek, setReminderDayOfWeek] = useState(
+    initial.reminderDayOfWeek != null ? String(initial.reminderDayOfWeek) : "",
+  );
+  const [reminderDayOfMonth, setReminderDayOfMonth] = useState(
+    initial.reminderDayOfMonth != null ? String(initial.reminderDayOfMonth) : "",
+  );
   const [isPublic, setIsPublic] = useState(initial.isPublic);
 
   useEffect(() => {
@@ -40,6 +64,15 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         setMonthlyAmount(String(initial.monthlyAmount));
         setDurationMonths(String(initial.durationMonths));
         setTotalAmount(String(initial.totalAmount));
+        setFrequency(initial.frequency);
+        setMaxMembers(initial.maxMembers != null ? String(initial.maxMembers) : "");
+        setReminderTime(initial.reminderTime ?? "");
+        setReminderDayOfWeek(
+          initial.reminderDayOfWeek != null ? String(initial.reminderDayOfWeek) : "",
+        );
+        setReminderDayOfMonth(
+          initial.reminderDayOfMonth != null ? String(initial.reminderDayOfMonth) : "",
+        );
         setIsPublic(initial.isPublic);
       });
     }
@@ -54,13 +87,24 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
       monthlyAmount: Number(monthlyAmount),
       durationMonths: Number(durationMonths),
       totalAmount: Number(totalAmount),
+      frequency,
+      maxMembers: maxMembers.trim() ? Number(maxMembers) : undefined,
+      reminderTime: reminderTime.trim() ? reminderTime : undefined,
+      reminderDayOfWeek:
+        frequency === "weekly" && reminderDayOfWeek !== ""
+          ? Number(reminderDayOfWeek)
+          : undefined,
+      reminderDayOfMonth:
+        frequency === "monthly" && reminderDayOfMonth !== ""
+          ? Number(reminderDayOfMonth)
+          : undefined,
       isPublic,
     });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <form
         onSubmit={handleSubmit}
@@ -70,8 +114,8 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Pencil className="size-5 text-primary" /> Edit Equb
           </h2>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose}>
-            <X />
+          <Button type="submit" size="sm">
+            Save
           </Button>
         </div>
 
@@ -98,7 +142,7 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-duration">Duration (months)</Label>
+          <Label htmlFor="edit-duration">Duration ({periodLabel(frequency).toLowerCase()}s)</Label>
           <Input
             id="edit-duration"
             required
@@ -121,6 +165,19 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
           />
         </div>
 
+        <ReminderScheduleFields
+          frequency={frequency}
+          onFrequencyChange={setFrequency}
+          maxMembers={maxMembers}
+          onMaxMembersChange={setMaxMembers}
+          reminderTime={reminderTime}
+          onReminderTimeChange={setReminderTime}
+          reminderDayOfWeek={reminderDayOfWeek}
+          onReminderDayOfWeekChange={setReminderDayOfWeek}
+          reminderDayOfMonth={reminderDayOfMonth}
+          onReminderDayOfMonthChange={setReminderDayOfMonth}
+        />
+
         <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
           <div>
             <p className="text-sm font-medium">{isPublic ? "Public" : "Private"}</p>
@@ -130,10 +187,6 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
           </div>
           <Switch checked={isPublic} onCheckedChange={setIsPublic} />
         </div>
-
-        <Button type="submit" size="lg" className="w-full">
-          Save Changes
-        </Button>
       </form>
     </div>
   );

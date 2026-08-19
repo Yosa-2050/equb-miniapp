@@ -7,6 +7,7 @@ import {
   Copy,
   Eye,
   XCircle,
+  AlertTriangle,
   Check,
   X,
   Banknote,
@@ -15,10 +16,12 @@ import {
   Receipt,
   Users,
   Loader2,
+  Users2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  EqubFrequency,
   MonthData,
   PaymentStatus,
   getMonth,
@@ -27,6 +30,7 @@ import {
   rejectPaymentFor,
   remindUnpaidMembers,
 } from "@/lib/api";
+import { periodLabel } from "@/lib/period-label";
 
 const paidLabel: Record<
   PaymentStatus,
@@ -35,17 +39,21 @@ const paidLabel: Record<
   paid: { text: "Paid", icon: CheckCircle2, className: "text-emerald-600" },
   pending: { text: "Pending", icon: Clock, className: "text-amber-600" },
   rejected: { text: "Rejected", icon: XCircle, className: "text-destructive" },
+  late: { text: "Late", icon: AlertTriangle, className: "text-destructive" },
 };
 
 export function ThisMonthTab({
   equbId,
   month,
   isAdmin,
+  frequency = "monthly",
 }: {
   equbId: string;
   month: number;
   isAdmin: boolean;
+  frequency?: EqubFrequency;
 }) {
+  const label = periodLabel(frequency);
   const [data, setData] = useState<MonthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,14 +140,14 @@ export function ThisMonthTab({
       <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
         <div className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground">
           <Crown className="size-4 text-primary" />
-          This month&apos;s pot goes to
+          This {label.toLowerCase()}&apos;s pot goes to
         </div>
         <h3 className="text-lg font-bold">
           {recipient ? (
             <>
               {recipient.fullName}
               <span className="ml-2 text-sm font-normal text-muted-foreground">
-                (Month {month})
+                ({label} {month})
               </span>
             </>
           ) : (
@@ -165,7 +173,7 @@ export function ThisMonthTab({
           </div>
         ) : (
           <p className="mt-4 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-            Run the lottery first so this month&apos;s winner is assigned.
+            Run the lottery first so this {label.toLowerCase()}&apos;s winner is assigned.
           </p>
         )}
 
@@ -188,7 +196,7 @@ export function ThisMonthTab({
           {data.allCollected ? (
             <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
               <CheckCircle2 className="size-4" /> All {data.totalMembers} contributions
-              collected for this month!
+              collected for this {label.toLowerCase()}!
             </p>
           ) : (
             <p className="mt-3 flex items-center gap-1.5 rounded-xl bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
@@ -221,6 +229,44 @@ export function ThisMonthTab({
           </Button>
         )}
       </section>
+
+      {/* Payout split (collab groups only, server-gated to group members) */}
+      {data.payoutSplit && (
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
+          <div className="mb-3 flex items-center gap-1.5">
+            <Users2 className="size-4 text-primary" />
+            <h4 className="font-semibold">Payout Split</h4>
+          </div>
+          <p className="mb-3 text-sm text-muted-foreground">
+            This {label.toLowerCase()}&apos;s pot of{" "}
+            {data.payoutSplit.totalPot.toLocaleString()} ETB is split by
+            contribution.
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.payoutSplit.splits.map((s) => (
+              <li
+                key={s.memberId}
+                className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1 truncate text-sm font-medium">
+                    {s.fullName}
+                    {s.memberId === data.payoutSplit!.leaderMemberId && (
+                      <Crown className="size-3.5 shrink-0 text-primary" />
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Contributed {s.contributionAmount.toLocaleString()} ETB
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm font-semibold text-primary">
+                  {s.share.toLocaleString(undefined, { maximumFractionDigits: 2 })} ETB
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Member payment checklist */}
       <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
@@ -284,7 +330,7 @@ export function ThisMonthTab({
         {!isRecipient && recipient && (
           <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
             <Eye className="size-3.5" /> Only {recipient.fullName} can approve or reject
-            receipts this month.
+            receipts this {label.toLowerCase()}.
           </p>
         )}
       </section>

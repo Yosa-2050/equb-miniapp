@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EqubDetail, getEqubByInvite, getEqubDetail, joinEqubByInvite } from "@/lib/api";
+import { periodLabel } from "@/lib/period-label";
 import { cn } from "@/lib/utils";
 
 export default function JoinPage() {
@@ -111,26 +112,32 @@ function JoinContent() {
               <h2 className="text-lg font-bold">{equb.name}</h2>
               <p className="text-sm text-muted-foreground">by @{equb.admin.telegramUsername}</p>
             </div>
-            <Badge variant={equb.isPublic ? "default" : "secondary"}>
-              {equb.isPublic ? "Public" : "Private"}
-            </Badge>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <Badge variant={equb.isPublic ? "default" : "secondary"}>
+                {equb.isPublic ? "Public" : "Private"}
+              </Badge>
+              {equb.isFull && <Badge variant="destructive">Full</Badge>}
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Wallet className="size-4 text-primary" />
               <p className="text-sm font-bold">{equb.monthlyAmount.toLocaleString()}</p>
-              <p className="text-[10px] text-muted-foreground">ETB / mo</p>
+              <p className="text-[10px] text-muted-foreground">ETB / {periodLabel(equb.frequency).toLowerCase()}</p>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Users className="size-4 text-primary" />
-              <p className="text-sm font-bold">{equb.membersCount}</p>
+              <p className="text-sm font-bold">
+                {equb.membersCount}
+                {equb.maxMembers != null && `/${equb.maxMembers}`}
+              </p>
               <p className="text-[10px] text-muted-foreground">Members</p>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <CalendarRange className="size-4 text-primary" />
               <p className="text-sm font-bold">{equb.durationMonths}</p>
-              <p className="text-[10px] text-muted-foreground">Months</p>
+              <p className="text-[10px] text-muted-foreground">{periodLabel(equb.frequency)}s</p>
             </div>
           </div>
 
@@ -152,6 +159,10 @@ function JoinContent() {
                 </Button>
               </Link>
             </div>
+          ) : equb.isFull ? (
+            <div className="mt-4 rounded-xl bg-muted/50 px-3 py-3 text-center text-sm text-muted-foreground">
+              This equb is full.
+            </div>
           ) : (
             <Button size="lg" className="mt-4 w-full" onClick={handleJoin} disabled={joining}>
               {joining ? (
@@ -167,10 +178,11 @@ function JoinContent() {
           )}
         </div>
 
-        {!joined && (
+        {!joined && !equb.isFull && (
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Joining means you agree to send {equb.monthlyAmount.toLocaleString()} ETB each month
-            to the monthly winner&apos;s account.
+            Joining means you agree to send {equb.monthlyAmount.toLocaleString()} ETB each{" "}
+            {periodLabel(equb.frequency).toLowerCase()} to that {periodLabel(equb.frequency).toLowerCase()}
+            &apos;s winner&apos;s account.
           </p>
         )}
       </div>

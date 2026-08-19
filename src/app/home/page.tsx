@@ -114,9 +114,12 @@ function EqubCard({ equb }: { equb: Equb }) {
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate font-semibold text-base">{equb.name}</h3>
-            <Badge variant={equb.isPublic ? "default" : "secondary"} className="shrink-0">
-              {equb.isPublic ? "Public" : "Private"}
-            </Badge>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <Badge variant={equb.isPublic ? "default" : "secondary"}>
+                {equb.isPublic ? "Public" : "Private"}
+              </Badge>
+              {equb.isFull && <Badge variant="destructive">Full</Badge>}
+            </div>
           </div>
 
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -132,7 +135,8 @@ function EqubCard({ equb }: { equb: Equb }) {
           </div>
 
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Users className="size-4" /> {equb.membersCount} Members
+            <Users className="size-4" /> {equb.membersCount}
+            {equb.maxMembers != null && `/${equb.maxMembers}`} Members
           </p>
         </CardContent>
       </Card>

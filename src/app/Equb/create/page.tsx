@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { createEqub } from "@/lib/api";
+import { createEqub, type EqubFrequency } from "@/lib/api";
+import { periodLabel } from "@/lib/period-label";
+import { ReminderScheduleFields } from "../reminder-schedule-fields";
 
 export default function CreateEqubPage() {
   const router = useRouter();
@@ -17,6 +19,11 @@ export default function CreateEqubPage() {
   const [monthlyAmount, setMonthlyAmount] = useState("");
   const [durationMonths, setDurationMonths] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
+  const [frequency, setFrequency] = useState<EqubFrequency>("monthly");
+  const [maxMembers, setMaxMembers] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
+  const [reminderDayOfWeek, setReminderDayOfWeek] = useState("");
+  const [reminderDayOfMonth, setReminderDayOfMonth] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -32,6 +39,17 @@ export default function CreateEqubPage() {
       monthlyAmount: Number(monthlyAmount),
       durationMonths: Number(durationMonths),
       totalAmount: Number(totalAmount),
+      frequency,
+      maxMembers: maxMembers.trim() ? Number(maxMembers) : undefined,
+      reminderTime: reminderTime.trim() ? reminderTime : undefined,
+      reminderDayOfWeek:
+        frequency === "weekly" && reminderDayOfWeek !== ""
+          ? Number(reminderDayOfWeek)
+          : undefined,
+      reminderDayOfMonth:
+        frequency === "monthly" && reminderDayOfMonth !== ""
+          ? Number(reminderDayOfMonth)
+          : undefined,
       isPublic,
       description: description.trim() ? description.trim() : undefined,
     })
@@ -80,7 +98,7 @@ export default function CreateEqubPage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="equb-duration">Duration (months)</Label>
+          <Label htmlFor="equb-duration">Duration ({periodLabel(frequency).toLowerCase()}s)</Label>
           <Input
             id="equb-duration"
             required
@@ -104,6 +122,19 @@ export default function CreateEqubPage() {
             placeholder="e.g. 12000"
           />
         </div>
+
+        <ReminderScheduleFields
+          frequency={frequency}
+          onFrequencyChange={setFrequency}
+          maxMembers={maxMembers}
+          onMaxMembersChange={setMaxMembers}
+          reminderTime={reminderTime}
+          onReminderTimeChange={setReminderTime}
+          reminderDayOfWeek={reminderDayOfWeek}
+          onReminderDayOfWeekChange={setReminderDayOfWeek}
+          reminderDayOfMonth={reminderDayOfMonth}
+          onReminderDayOfMonthChange={setReminderDayOfMonth}
+        />
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="equb-description">Description (optional)</Label>

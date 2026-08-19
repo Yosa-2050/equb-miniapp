@@ -19,6 +19,7 @@ import {
   Trash2,
   Ban,
   Loader2,
+  Users2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   EqubDetail,
   DrawsData,
   MemberRow,
+  EqubFrequency,
   getEqubDetail,
   getDraws,
   adminUpdateMember,
@@ -36,14 +38,20 @@ import {
   updateEqub,
   closeEqub,
   deleteEqub,
+  createCollabGroup,
+  dissolveCollabGroup,
+  ApiError,
 } from "@/lib/api";
 import { mockLotteryColors } from "@/lib/mock-data";
+import { periodLabel } from "@/lib/period-label";
+import { formatEthiopianDate } from "@/lib/ethiopian-calendar";
 import { ThisMonthTab } from "./this-month-tab";
 import { MemberEditModal } from "./member-edit-modal";
 import { NotifyMembersModal } from "./notify-members-modal";
 import { ShareInviteModal } from "./share-invite-modal";
 import { EditEqubModal } from "./edit-equb-modal";
 import { ConfirmDialog } from "./confirm-dialog";
+import { CollabGroupModal } from "./collab-group-modal";
 
 function initials(name: string) {
   return name
@@ -56,11 +64,7 @@ function initials(name: string) {
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatEthiopianDate(new Date(value));
 }
 
 interface DetailMember extends MemberRow {
@@ -84,6 +88,9 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [sendingNotify, setSendingNotify] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [groupError, setGroupError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     Promise.all([getEqubDetail(equbId), getDraws(equbId)])
@@ -124,10 +131,19 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   }
 
   const isAdmin = equb.isAdmin;
+  const label = periodLabel(equb.frequency);
   const members: DetailMember[] = equb.members.map((m) => ({
     ...m,
     isAdmin: m.role === "admin",
   }));
+
+  const eligibleMembers = members.filter(
+    (m) => m.order === null && m.collabGroupId === null,
+  );
+  const groupLabelByMemberId = new Map<string, string>();
+  for (const g of equb.collabGroups) {
+    for (const id of g.memberIds) groupLabelByMemberId.set(id, g.label);
+  }
 
   const drawResults = draws?.results ?? [];
   const hasDrawn = (draws?.drawn ?? 0) > 0;
@@ -177,6 +193,11 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
     monthlyAmount: number;
     durationMonths: number;
     totalAmount: number;
+    frequency: EqubFrequency;
+    maxMembers?: number;
+    reminderTime?: string;
+    reminderDayOfWeek?: number;
+    reminderDayOfMonth?: number;
     isPublic: boolean;
   }) => {
     setBusy(true);
@@ -202,6 +223,34 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         console.error("Failed to delete equb", err);
         setBusy(false);
       });
+  };
+
+  const handleCreateGroup = (data: {
+    members: { memberId: string; contributionAmount: number }[];
+    leaderMemberId: string;
+  }) => {
+    setSavingGroup(true);
+    setGroupError(null);
+    createCollabGroup(equbId, data)
+      .then(() => {
+        reload();
+        setGroupModalOpen(false);
+      })
+      .catch((err) => {
+        console.error("Failed to create collab group", err);
+        setGroupError(
+          err instanceof ApiError ? err.message : "Failed to create group",
+        );
+      })
+      .finally(() => setSavingGroup(false));
+  };
+
+  const handleDissolveGroup = (groupId: string) => {
+    setBusy(true);
+    dissolveCollabGroup(equbId, groupId)
+      .then(reload)
+      .catch((err) => console.error("Failed to dissolve group", err))
+      .finally(() => setBusy(false));
   };
 
   return (
@@ -234,13 +283,14 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                 )}
               </div>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                by @{equb.admin.telegramUsername} · Round {equb.currentRound}/{equb.durationMonths}
+                by @{equb.admin.telegramUsername} · {label} {equb.currentRound}/{equb.durationMonths}
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <Badge variant={equb.isPublic ? "default" : "secondary"}>
                 {equb.isPublic ? "Public" : "Private"}
               </Badge>
+              {equb.isFull && <Badge variant="destructive">Full</Badge>}
               <Badge
                 variant="outline"
                 className={
@@ -258,11 +308,18 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Wallet className="size-5 text-primary" />
               <p className="text-lg font-bold">{equb.monthlyAmount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">ETB / month</p>
+              <p className="text-xs text-muted-foreground">ETB / {label.toLowerCase()}</p>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Users className="size-5 text-primary" />
-              <p className="text-lg font-bold">{members.length}</p>
+              <p className="text-lg font-bold">
+                {members.length}
+                {equb.maxMembers != null && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    /{equb.maxMembers}
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-muted-foreground">Members</p>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
@@ -323,13 +380,13 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         {/* Tabs: This Month | Members | Equb Months */}
         <Tabs defaultValue="this-month" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="this-month">This Month</TabsTrigger>
+            <TabsTrigger value="this-month">This {label}</TabsTrigger>
             <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="months">Equb Months</TabsTrigger>
+            <TabsTrigger value="months">Equb {label}s</TabsTrigger>
           </TabsList>
 
           <TabsContent value="this-month" className="mt-4">
-            <ThisMonthTab equbId={equbId} month={equb.currentRound} isAdmin={isAdmin} />
+            <ThisMonthTab equbId={equbId} month={equb.currentRound} isAdmin={isAdmin} frequency={equb.frequency} />
           </TabsContent>
 
           <TabsContent value="members" className="mt-4">
@@ -341,12 +398,50 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                     <Users className="size-4" /> {members.length}
                   </span>
                   {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setGroupError(null);
+                        setGroupModalOpen(true);
+                      }}
+                      disabled={busy || eligibleMembers.length < 2}
+                    >
+                      <Users2 /> Group
+                    </Button>
+                  )}
+                  {isAdmin && (
                     <Button size="sm" variant="outline" onClick={() => setNotifyOpen(true)} disabled={busy}>
                       <Megaphone /> Notify
                     </Button>
                   )}
                 </div>
               </div>
+
+              {equb.collabGroups.length > 0 && (
+                <div className="mb-4 flex flex-col gap-2">
+                  {equb.collabGroups.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2"
+                    >
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        <Users2 className="size-3.5 text-primary" /> {g.label}
+                      </span>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDissolveGroup(g.id)}
+                          disabled={busy}
+                        >
+                          Dissolve
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
                            <div className="mb-4 flex items-center -space-x-2">
                 {members.slice(0, 4).map((m) => (
@@ -377,6 +472,11 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                         <p className="flex items-center gap-1 truncate text-sm font-medium">
                           {m.fullName}
                           {m.isAdmin && <Crown className="size-3.5 shrink-0 text-primary" />}
+                          {m.collabRole === "leader" && (
+                            <Badge variant="outline" className="gap-1 px-1.5 py-0 text-[10px]">
+                              Leader
+                            </Badge>
+                          )}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
                           @{m.telegramUsername ?? "—"}
@@ -384,16 +484,21 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                             ? ` · ${m.account.provider}: ${m.account.number ?? "—"}`
                             : ""}
                         </p>
+                        {groupLabelByMemberId.has(m.id) && (
+                          <p className="truncate text-xs font-medium text-primary">
+                            {groupLabelByMemberId.get(m.id)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       {m.order ? (
                         <Badge variant="outline" className="gap-1">
-                          <CalendarRange className="size-3" /> Month {m.order}
+                          <CalendarRange className="size-3" /> {label} {m.order}
                         </Badge>
                       ) : (
                         <span className="shrink-0 text-xs text-muted-foreground">
-                          No month yet
+                          No {label.toLowerCase()} yet
                         </span>
                       )}
                       {isAdmin && (
@@ -428,7 +533,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           <TabsContent value="months" className="mt-4">
             <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-semibold">Equb Months</h3>
+                <h3 className="font-semibold">Equb {label}s</h3>
                 {hasDrawn && (
                   <Badge variant={allDrawn ? "default" : "secondary"}>
                     {draws?.drawn}/{totalMembers} drawn
@@ -445,7 +550,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                     <p className="font-medium">No lottery yet</p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Spin the wheel once at the start of the equb to assign each
-                      member their equb month.
+                      member their equb {label.toLowerCase()}.
                     </p>
                   </div>
                   {isAdmin && (
@@ -461,12 +566,12 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
               ) : allDrawn ? (
                 <p className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                   <CheckCircle2 className="size-4 shrink-0" /> Lottery complete — every member
-                  has their equb month.
+                  has their equb {label.toLowerCase()}.
                 </p>
               ) : (
                 <div className="mb-4 flex items-center justify-between gap-2 rounded-xl bg-muted/50 px-3 py-2.5">
                   <p className="text-sm text-muted-foreground">
-                    {totalMembers - (draws?.drawn ?? 0)} member(s) still need a month.
+                    {totalMembers - (draws?.drawn ?? 0)} member(s) still need a {label.toLowerCase()}.
                   </p>
                   {isAdmin && (
                     <Button size="sm" onClick={() => router.push(`/Equb/${equbId}/lottery`)}>
@@ -502,7 +607,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                       </div>
                       {m.month ? (
                         <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                          <CalendarRange className="size-3" /> Month {m.month}
+                          <CalendarRange className="size-3" /> {label} {m.month}
                         </span>
                       ) : (
                         <span className="shrink-0 text-xs text-muted-foreground">—</span>
@@ -530,6 +635,15 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         onSend={handleSendNotify}
         sending={sendingNotify}
       />
+      <CollabGroupModal
+        open={groupModalOpen}
+        eligibleMembers={eligibleMembers}
+        monthlyAmount={equb.monthlyAmount}
+        onClose={() => setGroupModalOpen(false)}
+        onCreate={handleCreateGroup}
+        saving={savingGroup}
+        error={groupError}
+      />
       <ShareInviteModal
         open={shareOpen}
         onClose={() => setShareOpen(false)}
@@ -543,6 +657,11 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           monthlyAmount: equb.monthlyAmount,
           durationMonths: equb.durationMonths,
           totalAmount: equb.totalAmount,
+          frequency: equb.frequency,
+          maxMembers: equb.maxMembers,
+          reminderTime: equb.reminderTime,
+          reminderDayOfWeek: equb.reminderDayOfWeek,
+          reminderDayOfMonth: equb.reminderDayOfMonth,
           isPublic: equb.isPublic,
         }}
         onClose={() => setEditOpen(false)}

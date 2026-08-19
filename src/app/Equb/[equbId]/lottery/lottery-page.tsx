@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import {
   API_BASE,
   DrawResult,
+  EqubFrequency,
   announceLottery,
   getDraws,
   getEqubDetail,
@@ -24,6 +25,7 @@ import {
   spinLottery,
 } from "@/lib/api";
 import { mockLotteryColors } from "@/lib/mock-data";
+import { periodLabel } from "@/lib/period-label";
 
 const COLORS = mockLotteryColors;
 
@@ -51,6 +53,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
   const router = useRouter();
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [frequency, setFrequency] = useState<EqubFrequency>("monthly");
   const [connected, setConnected] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
@@ -71,6 +74,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
       .then(([draws, detail]) => {
         setMembers(draws.results);
         setIsAdmin(detail.isAdmin);
+        setFrequency(detail.frequency);
       })
       .catch((err) => console.error("Failed to load draws", err))
       .finally(() => setLoading(false));
@@ -78,6 +82,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
 
   const N = members.length;
   const SEG = N > 0 ? SEG_BASE / N : SEG_BASE;
+  const periodWord = periodLabel(frequency);
 
   const applyResult = (result: DrawResult) => {
     const current = membersRef.current;
@@ -287,7 +292,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 <>
                   <Trophy className="mx-auto mb-2 size-8 text-primary" />
                   <p className="text-sm text-muted-foreground">
-                    Month {winner.month} goes to
+                    {periodWord} {winner.month} goes to
                   </p>
                   <p className="text-xl font-bold">
                     #{winner.rosterNumber} · {winner.fullName}
@@ -295,11 +300,11 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 </>
               ) : completed ? (
                 <p className="text-sm text-muted-foreground">
-                  All months have been assigned. Lottery complete!
+                  All {periodWord.toLowerCase()}s have been assigned. Lottery complete!
                 </p>
               ) : isAdmin ? (
                 <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <RotateCw className="size-4" /> Press Spin to draw the next month
+                  <RotateCw className="size-4" /> Press Spin to draw the next {periodWord.toLowerCase()}
                 </p>
               ) : (
                 <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -322,7 +327,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
 
             {/* Results list: members with their assigned equb month */}
             <section className="w-full">
-              <h3 className="mb-3 font-semibold">Equb Months</h3>
+              <h3 className="mb-3 font-semibold">Equb {periodWord}s</h3>
               <ul className="flex flex-col gap-2">
                 {members.map((m, i) => (
                   <li
@@ -351,7 +356,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                     </div>
                     {m.month !== null ? (
                       <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                        Month {m.month}
+                        {periodWord} {m.month}
                       </span>
                     ) : (
                       <span className="shrink-0 text-xs text-muted-foreground">—</span>
