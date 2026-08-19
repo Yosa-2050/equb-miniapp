@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, UserRound, Loader2 } from "lucide-react";
+import { UserRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,7 @@ export function EditProfileModal({ open, initial, onClose, onSave, saving }: Edi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <form
         onSubmit={handleSubmit}
@@ -43,8 +43,8 @@ export function EditProfileModal({ open, initial, onClose, onSave, saving }: Edi
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <UserRound className="size-5 text-primary" /> Edit Profile
           </h2>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose}>
-            <X />
+          <Button type="submit" size="sm" disabled={saving}>
+            {saving ? <Loader2 className="animate-spin" /> : "Save"}
           </Button>
         </div>
 
@@ -67,16 +67,6 @@ export function EditProfileModal({ open, initial, onClose, onSave, saving }: Edi
             placeholder="+251 9xx xxx xxx"
           />
         </div>
-
-        <Button type="submit" size="lg" className="w-full" disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="animate-spin" /> Saving…
-            </>
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
       </form>
     </div>
   );

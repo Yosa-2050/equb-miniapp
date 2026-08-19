@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Megaphone, Loader2 } from "lucide-react";
+import { Megaphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,7 @@ export function NotifyMembersModal({ open, onClose, onSend, sending }: NotifyMem
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <form
         onSubmit={handleSubmit}
@@ -35,8 +35,8 @@ export function NotifyMembersModal({ open, onClose, onSend, sending }: NotifyMem
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Megaphone className="size-5 text-primary" /> Notify Members
           </h2>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose}>
-            <X />
+          <Button type="submit" size="sm" disabled={sending}>
+            {sending ? <Loader2 className="animate-spin" /> : "Send"}
           </Button>
         </div>
 
@@ -67,16 +67,6 @@ export function NotifyMembersModal({ open, onClose, onSend, sending }: NotifyMem
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
-
-        <Button type="submit" size="lg" className="w-full" disabled={sending}>
-          {sending ? (
-            <>
-              <Loader2 className="animate-spin" /> Sending…
-            </>
-          ) : (
-            "Send to All Members"
-          )}
-        </Button>
       </form>
     </div>
   );

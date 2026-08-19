@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, UserCog, Loader2 } from "lucide-react";
+import { UserCog, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +60,7 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <form
         onSubmit={handleSubmit}
@@ -70,8 +70,8 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <UserCog className="size-5 text-primary" /> Edit Member
           </h2>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose}>
-            <X />
+          <Button type="submit" size="sm" disabled={saving}>
+            {saving ? <Loader2 className="animate-spin" /> : "Save"}
           </Button>
         </div>
 
@@ -134,16 +134,6 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
             placeholder="Leave blank to use the equb default"
           />
         </div>
-
-        <Button type="submit" size="lg" className="w-full" disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="animate-spin" /> Saving…
-            </>
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
       </form>
     </div>
   );
