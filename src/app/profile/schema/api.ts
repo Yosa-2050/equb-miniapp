@@ -12,6 +12,7 @@ function toProfile(p: ApiProfile): Profile {
     telegramUsername: p.telegramUsername ? `@${p.telegramUsername}` : "—",
     phone: p.phone ?? "Not set",
     avatarUrl: p.avatarUrl ?? "",
+    language: p.language,
     createdEqubs: p.createdEqubs,
     joinedEqubs: p.joinedEqubs,
     totalSaved: p.totalSaved,
@@ -24,8 +25,9 @@ export const getProfile = async (): Promise<Profile> => {
 };
 
 export const updateProfile = async (data: {
-  fullName: string;
-  phone: string;
+  fullName?: string;
+  phone?: string;
+  language?: "en" | "am";
 }): Promise<Profile> => {
   const p: ApiProfile = await apiUpdateProfile(data);
   return toProfile(p);

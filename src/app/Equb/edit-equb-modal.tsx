@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select } from "@/components/ui/select";
-import type { EqubFrequency } from "@/lib/api";
-import { periodLabel, amountFieldLabel } from "@/lib/period-label";
+import type { EqubFrequency, PaymentCollector } from "@/lib/api";
+import { periodLabel } from "@/lib/period-label";
 import { ReminderScheduleFields } from "./reminder-schedule-fields";
 
 interface EditEqubModalProps {
@@ -19,6 +20,7 @@ interface EditEqubModalProps {
     durationMonths: number;
     totalAmount: number;
     frequency: EqubFrequency;
+    collector: PaymentCollector;
     maxMembers: number | null;
     reminderTime: string | null;
     reminderDayOfWeek: number | null;
@@ -32,6 +34,7 @@ interface EditEqubModalProps {
     durationMonths: number;
     totalAmount: number;
     frequency: EqubFrequency;
+    collector: PaymentCollector;
     maxMembers?: number;
     reminderTime?: string;
     reminderDayOfWeek?: number;
@@ -41,11 +44,14 @@ interface EditEqubModalProps {
 }
 
 export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalProps) {
+  const t = useTranslations("equbForm");
+  const tc = useTranslations("common");
   const [name, setName] = useState(initial.name);
   const [monthlyAmount, setMonthlyAmount] = useState(String(initial.monthlyAmount));
   const [durationMonths, setDurationMonths] = useState(String(initial.durationMonths));
   const [totalAmount, setTotalAmount] = useState(String(initial.totalAmount));
   const [frequency, setFrequency] = useState<EqubFrequency>(initial.frequency);
+  const [collector, setCollector] = useState<PaymentCollector>(initial.collector);
   const [maxMembers, setMaxMembers] = useState(
     initial.maxMembers != null ? String(initial.maxMembers) : "",
   );
@@ -66,6 +72,7 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         setDurationMonths(String(initial.durationMonths));
         setTotalAmount(String(initial.totalAmount));
         setFrequency(initial.frequency);
+        setCollector(initial.collector);
         setMaxMembers(initial.maxMembers != null ? String(initial.maxMembers) : "");
         setReminderTime(initial.reminderTime ?? "");
         setReminderDayOfWeek(
@@ -89,6 +96,7 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
       durationMonths: Number(durationMonths),
       totalAmount: Number(totalAmount),
       frequency,
+      collector,
       maxMembers: maxMembers.trim() ? Number(maxMembers) : undefined,
       reminderTime: reminderTime.trim() ? reminderTime : undefined,
       reminderDayOfWeek:
@@ -113,15 +121,15 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Pencil className="size-5 text-primary" /> Edit Equb
+            <Pencil className="size-5 text-primary" /> {t("editTitle")}
           </h2>
           <Button type="submit" size="sm">
-            Save
+            {tc("save")}
           </Button>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-name">Equb Name</Label>
+          <Label htmlFor="edit-name">{t("nameLabel")}</Label>
           <Input
             id="edit-name"
             required
@@ -131,20 +139,20 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-frequency">Frequency</Label>
+          <Label htmlFor="edit-frequency">{t("frequencyLabel")}</Label>
           <Select
             id="edit-frequency"
             value={frequency}
             onChange={(e) => setFrequency(e.target.value as EqubFrequency)}
           >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
+            <option value="daily">{t("frequencyDaily")}</option>
+            <option value="weekly">{t("frequencyWeekly")}</option>
+            <option value="monthly">{t("frequencyMonthly")}</option>
           </Select>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-amount">{amountFieldLabel(frequency)}</Label>
+          <Label htmlFor="edit-amount">{t(`amountLabel.${frequency}`)}</Label>
           <Input
             id="edit-amount"
             required
@@ -156,7 +164,9 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-duration">Duration ({periodLabel(frequency).toLowerCase()}s)</Label>
+          <Label htmlFor="edit-duration">
+            {t("durationLabel", { period: periodLabel(frequency).toLowerCase() })}
+          </Label>
           <Input
             id="edit-duration"
             required
@@ -168,7 +178,7 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-total">Total Amount (ETB)</Label>
+          <Label htmlFor="edit-total">{t("totalAmountLabel")}</Label>
           <Input
             id="edit-total"
             required
@@ -181,6 +191,8 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
 
         <ReminderScheduleFields
           frequency={frequency}
+          collector={collector}
+          onCollectorChange={setCollector}
           maxMembers={maxMembers}
           onMaxMembersChange={setMaxMembers}
           reminderTime={reminderTime}
@@ -193,9 +205,9 @@ export function EditEqubModal({ open, initial, onClose, onSave }: EditEqubModalP
 
         <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
           <div>
-            <p className="text-sm font-medium">{isPublic ? "Public" : "Private"}</p>
+            <p className="text-sm font-medium">{isPublic ? t("publicTitle") : t("privateTitle")}</p>
             <p className="text-xs text-muted-foreground">
-              {isPublic ? "Anyone with the link can join" : "Only invited members can join"}
+              {isPublic ? t("publicHint") : t("privateHint")}
             </p>
           </div>
           <Switch checked={isPublic} onCheckedChange={setIsPublic} />

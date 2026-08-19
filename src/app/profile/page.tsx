@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, MapPin, Pencil, UserRound, Wallet, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import type { Profile } from "./schema/type";
 import { EditProfileModal } from "./edit-profile-modal";
 
 export default function ProfilePage() {
+  const t = useTranslations("profile");
+  const tc = useTranslations("common");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -45,7 +48,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin" /> Loading…
+        <Loader2 className="size-5 animate-spin" /> {tc("loading")}
       </div>
     );
   }
@@ -60,9 +63,9 @@ export default function ProfilePage() {
   return (
     <div className="p-4">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Profile</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil /> Edit
+          <Pencil /> {tc("edit")}
         </Button>
       </header>
 
@@ -85,7 +88,7 @@ export default function ProfilePage() {
           <UserRound className="size-5" />
         </div>
         <div className="min-w-0">
-          <p className="text-muted-foreground">Phone Number</p>
+          <p className="text-muted-foreground">{t("phoneNumber")}</p>
           <p className="font-medium">{profile.phone}</p>
         </div>
       </div>
@@ -95,17 +98,17 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card p-5 shadow-xs">
           <Users className="size-6 text-primary" />
           <p className="text-2xl font-bold">{profile.createdEqubs}</p>
-          <p className="text-sm text-muted-foreground">Created Equbs</p>
+          <p className="text-sm text-muted-foreground">{t("createdEqubs")}</p>
         </div>
         <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card p-5 shadow-xs">
           <UserRound className="size-6 text-primary" />
           <p className="text-2xl font-bold">{profile.joinedEqubs}</p>
-          <p className="text-sm text-muted-foreground">Joined Equbs</p>
+          <p className="text-sm text-muted-foreground">{t("joinedEqubs")}</p>
         </div>
         <div className="col-span-2 flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-xs">
           <div className="flex items-center gap-2 text-sm">
             <Wallet className="size-5 text-primary" />
-            <span className="text-muted-foreground">Total Saved</span>
+            <span className="text-muted-foreground">{t("totalSaved")}</span>
           </div>
           <p className="font-bold">{profile.totalSaved.toLocaleString()} ETB</p>
         </div>

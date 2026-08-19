@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Users2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,8 @@ export function CollabGroupModal({
   saving,
   error,
 }: CollabGroupModalProps) {
+  const t = useTranslations("collabGroup");
+  const tc = useTranslations("common");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [leaderId, setLeaderId] = useState<string>("");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
@@ -75,21 +78,20 @@ export function CollabGroupModal({
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Users2 className="size-5 text-primary" /> Create Collab Group
+            <Users2 className="size-5 text-primary" /> {t("title")}
           </h2>
           <Button type="submit" size="sm" disabled={!canSubmit || saving}>
-            {saving ? <Loader2 className="animate-spin" /> : "Save"}
+            {saving ? <Loader2 className="animate-spin" /> : tc("save")}
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Select 2+ members to share one lottery slot. Their contributions must
-          sum to exactly {monthlyAmount.toLocaleString()} ETB.
+          {t("description", { amount: monthlyAmount.toLocaleString() })}
         </p>
 
         {eligibleMembers.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No eligible members (everyone is already drawn or grouped).
+            {t("noEligible")}
           </p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -132,7 +134,7 @@ export function CollabGroupModal({
                           onChange={() => setLeaderId(m.id)}
                           className="accent-primary"
                         />
-                        Leader
+                        {t("leader")}
                       </label>
                     </>
                   )}
@@ -151,8 +153,8 @@ export function CollabGroupModal({
                 : "bg-destructive/10 text-destructive")
             }
           >
-            Sum: {sum.toLocaleString()} / {monthlyAmount.toLocaleString()} ETB
-            {!isValidSum && " — must match exactly"}
+            {t("sum", { sum: sum.toLocaleString(), total: monthlyAmount.toLocaleString() })}
+            {!isValidSum && t("sumMismatch")}
           </div>
         )}
 

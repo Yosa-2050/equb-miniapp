@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { io, Socket } from "socket.io-client";
 import {
   ArrowLeft,
@@ -51,6 +52,8 @@ function segmentPath(start: number, end: number, radius: number) {
 
 export default function LotteryPage({ equbId }: { equbId: string }) {
   const router = useRouter();
+  const t = useTranslations("lottery");
+  const tc = useTranslations("common");
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [frequency, setFrequency] = useState<EqubFrequency>("monthly");
@@ -177,7 +180,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center gap-2 text-muted-foreground">
-        <Loader2 className="size-5 animate-spin" /> Loading…
+        <Loader2 className="size-5 animate-spin" /> {tc("loading")}
       </div>
     );
   }
@@ -188,21 +191,21 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
         <Button variant="ghost" size="icon-sm" onClick={() => router.back()}>
           <ArrowLeft />
         </Button>
-        <h1 className="flex-1 truncate text-lg font-bold">Equb Lottery</h1>
+        <h1 className="flex-1 truncate text-lg font-bold">{t("title")}</h1>
         {connected && (
           <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-            <Radio className="size-3.5" /> Live
+            <Radio className="size-3.5" /> {t("live")}
           </span>
         )}
         {completed && (
-          <span className="text-xs font-medium text-emerald-600">Completed</span>
+          <span className="text-xs font-medium text-emerald-600">{t("completed")}</span>
         )}
       </header>
 
       <div className="flex flex-col items-center gap-6 p-4">
         {N === 0 ? (
           <p className="py-10 text-sm text-muted-foreground">
-            This equb has no members yet.
+            {t("noMembers")}
           </p>
         ) : (
           <>
@@ -215,10 +218,10 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
               >
                 <Megaphone />{" "}
                 {announcing
-                  ? "Announcing…"
+                  ? t("announcing")
                   : announced
-                    ? "Members Notified"
-                    : "Announce Live Lottery"}
+                    ? t("membersNotified")
+                    : t("announceLive")}
               </Button>
             )}
 
@@ -292,7 +295,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 <>
                   <Trophy className="mx-auto mb-2 size-8 text-primary" />
                   <p className="text-sm text-muted-foreground">
-                    {periodWord} {winner.month} goes to
+                    {t("goesTo", { period: periodWord, round: winner.month ?? "" })}
                   </p>
                   <p className="text-xl font-bold">
                     #{winner.rosterNumber} · {winner.fullName}
@@ -300,15 +303,15 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 </>
               ) : completed ? (
                 <p className="text-sm text-muted-foreground">
-                  All {periodWord.toLowerCase()}s have been assigned. Lottery complete!
+                  {t("allAssigned", { period: periodWord.toLowerCase() })}
                 </p>
               ) : isAdmin ? (
                 <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <RotateCw className="size-4" /> Press Spin to draw the next {periodWord.toLowerCase()}
+                  <RotateCw className="size-4" /> {t("pressSpin", { period: periodWord.toLowerCase() })}
                 </p>
               ) : (
                 <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Radio className="size-4" /> Waiting for the admin to spin…
+                  <Radio className="size-4" /> {t("waitingForAdmin")}
                 </p>
               )}
             </div>
@@ -321,13 +324,13 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                 onClick={handleSpin}
                 disabled={spinning || completed}
               >
-                {spinning ? "Spinning..." : completed ? "Lottery Done" : "Spin the Wheel"}
+                {spinning ? t("spinning") : completed ? t("lotteryDone") : t("spinTheWheel")}
               </Button>
             )}
 
             {/* Results list: members with their assigned equb month */}
             <section className="w-full">
-              <h3 className="mb-3 font-semibold">Equb {periodWord}s</h3>
+              <h3 className="mb-3 font-semibold">{t("equbPeriods", { period: periodWord })}</h3>
               <ul className="flex flex-col gap-2">
                 {members.map((m, i) => (
                   <li
@@ -351,7 +354,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                             <CheckCircle2 className="ml-1.5 inline size-3.5 text-emerald-600" />
                           )}
                         </p>
-                        <p className="text-xs text-muted-foreground">Member #{i + 1}</p>
+                        <p className="text-xs text-muted-foreground">{t("memberNumber", { number: i + 1 })}</p>
                       </div>
                     </div>
                     {m.month !== null ? (

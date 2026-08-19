@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Users,
@@ -31,6 +32,7 @@ import {
   DrawsData,
   MemberRow,
   EqubFrequency,
+  PaymentCollector,
   getEqubDetail,
   getDraws,
   adminUpdateMember,
@@ -75,6 +77,7 @@ interface DetailMember extends MemberRow {
 
 export function EqubDetailPage({ equbId }: { equbId: string }) {
   const router = useRouter();
+  const t = useTranslations("equb");
   const [equb, setEqub] = useState<EqubDetail | null>(null);
   const [draws, setDraws] = useState<DrawsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,6 +200,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
     durationMonths: number;
     totalAmount: number;
     frequency: EqubFrequency;
+    collector: PaymentCollector;
     maxMembers?: number;
     reminderTime?: string;
     reminderDayOfWeek?: number;
@@ -271,7 +275,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         <Button variant="ghost" size="icon-sm" onClick={() => router.back()}>
           <ArrowLeft />
         </Button>
-        <h1 className="flex-1 truncate text-lg font-bold">Equb Details</h1>
+        <h1 className="flex-1 truncate text-lg font-bold">{t("detailsTitle")}</h1>
       </header>
 
       <div className="flex flex-col gap-4 p-4">
@@ -299,9 +303,9 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               <Badge variant={equb.isPublic ? "default" : "secondary"}>
-                {equb.isPublic ? "Public" : "Private"}
+                {equb.isPublic ? t("public") : t("private")}
               </Badge>
-              {equb.isFull && <Badge variant="destructive">Full</Badge>}
+              {equb.isFull && <Badge variant="destructive">{t("full")}</Badge>}
               <Badge
                 variant="outline"
                 className={
@@ -310,7 +314,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                     : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
                 }
               >
-                {equb.status === "active" ? "Active" : "Completed"}
+                {equb.status === "active" ? t("active") : t("completed")}
               </Badge>
             </div>
           </div>
@@ -331,7 +335,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                   </span>
                 )}
               </p>
-              <p className="text-xs text-muted-foreground">Members</p>
+              <p className="text-xs text-muted-foreground">{t("members")}</p>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Wallet className="size-5 text-primary" />
@@ -363,13 +367,13 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                 >
                   {joining ? (
                     <>
-                      <Loader2 className="animate-spin" /> Joining…
+                      <Loader2 className="animate-spin" /> {t("joining")}
                     </>
                   ) : equb.isFull ? (
-                    "Equb is full"
+                    t("equbFull")
                   ) : (
                     <>
-                      <UserPlus /> Join Equb
+                      <UserPlus /> {t("joinEqub")}
                     </>
                   )}
                 </Button>
@@ -391,7 +395,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                     size="lg"
                     onClick={() => setShareOpen(true)}
                   >
-                    <Share2 /> Share Invite Link
+                    <Share2 /> {t("shareInvite")}
                   </Button>
                 </>
               )
@@ -406,10 +410,10 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                 onClick={() => setConfirmClose(true)}
                 disabled={busy || equb.status !== "active"}
               >
-                <Ban /> Close Equb
+                <Ban /> {t("closeEqub")}
               </Button>
               <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)} disabled={busy}>
-                <Trash2 /> Delete
+                <Trash2 /> {t("delete")}
               </Button>
             </div>
           )}
@@ -419,7 +423,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         <Tabs defaultValue="this-month" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="this-month">This {label}</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
+            <TabsTrigger value="members">{t("members")}</TabsTrigger>
             <TabsTrigger value="months">Equb {label}s</TabsTrigger>
           </TabsList>
 
@@ -430,7 +434,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           <TabsContent value="members" className="mt-4">
             <section className="rounded-2xl border border-border bg-card p-5 shadow-xs">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-semibold">Members</h3>
+                <h3 className="font-semibold">{t("members")}</h3>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Users className="size-4" /> {members.length}
@@ -445,12 +449,12 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                       }}
                       disabled={busy || eligibleMembers.length < 2}
                     >
-                      <Users2 /> Group
+                      <Users2 /> {t("group")}
                     </Button>
                   )}
                   {isAdmin && (
                     <Button size="sm" variant="outline" onClick={() => setNotifyOpen(true)} disabled={busy}>
-                      <Megaphone /> Notify
+                      <Megaphone /> {t("notify")}
                     </Button>
                   )}
                 </div>
@@ -473,7 +477,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                           onClick={() => handleDissolveGroup(g.id)}
                           disabled={busy}
                         >
-                          Dissolve
+                          {t("dissolve")}
                         </Button>
                       )}
                     </div>
@@ -696,6 +700,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
           durationMonths: equb.durationMonths,
           totalAmount: equb.totalAmount,
           frequency: equb.frequency,
+          collector: equb.collector,
           maxMembers: equb.maxMembers,
           reminderTime: equb.reminderTime,
           reminderDayOfWeek: equb.reminderDayOfWeek,

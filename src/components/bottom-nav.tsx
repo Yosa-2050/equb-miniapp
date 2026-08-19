@@ -3,18 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Home, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getNotifications } from "@/lib/api";
 
-const items = [
-  { href: "/home", label: "Home", Icon: Home },
-  { href: "/notification", label: "Alerts", Icon: Bell },
-  { href: "/profile", label: "Profile", Icon: User },
-];
-
 export function BottomNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
+  const items = [
+    { href: "/home", label: t("home"), Icon: Home },
+    { href: "/notification", label: t("alerts"), Icon: Bell },
+    { href: "/profile", label: t("profile"), Icon: User },
+  ];
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {

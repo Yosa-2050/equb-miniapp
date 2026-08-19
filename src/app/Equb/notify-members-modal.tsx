@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Megaphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ interface NotifyMembersModalProps {
 }
 
 export function NotifyMembersModal({ open, onClose, onSend, sending }: NotifyMembersModalProps) {
+  const t = useTranslations("notifyModal");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
 
@@ -33,36 +35,36 @@ export function NotifyMembersModal({ open, onClose, onSend, sending }: NotifyMem
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Megaphone className="size-5 text-primary" /> Notify Members
+            <Megaphone className="size-5 text-primary" /> {t("title")}
           </h2>
           <Button type="submit" size="sm" disabled={sending}>
-            {sending ? <Loader2 className="animate-spin" /> : "Send"}
+            {sending ? <Loader2 className="animate-spin" /> : t("send")}
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Sends this as an in-app notification and a Telegram DM to every member.
+          {t("description")}
         </p>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="notify-title">Title</Label>
+          <Label htmlFor="notify-title">{t("titleLabel")}</Label>
           <Input
             id="notify-title"
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Lottery starts soon!"
+            placeholder={t("titlePlaceholder")}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="notify-message">Message</Label>
+          <Label htmlFor="notify-message">{t("messageLabel")}</Label>
           <textarea
             id="notify-message"
             required
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="e.g. Join us live in the app at 6 PM for this month's draw."
+            placeholder={t("messagePlaceholder")}
             rows={4}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />

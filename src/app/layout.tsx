@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import Script from "next/script";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { BottomNav } from "@/components/bottom-nav";
 import { SessionBootstrap } from "./session-bootstrap";
+import { getUserLocale, getMessages } from "@/i18n/locale";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -23,10 +25,13 @@ export const metadata: Metadata = {
   description: "Equb management mini app",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getUserLocale();
+  const messages = await getMessages(locale);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
       <head>
@@ -36,9 +41,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <SessionBootstrap />
-        <main className="mx-auto w-full max-w-md flex-1 pb-20">{children}</main>
-        <BottomNav />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <SessionBootstrap />
+          <main className="mx-auto w-full max-w-md flex-1 pb-20">{children}</main>
+          <BottomNav />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

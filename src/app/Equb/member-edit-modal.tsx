@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { UserCog, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,8 @@ interface MemberEditModalProps {
 }
 
 export function MemberEditModal({ open, member, onClose, onSave, saving }: MemberEditModalProps) {
+  const t = useTranslations("memberEdit");
+  const tc = useTranslations("common");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [accountProvider, setAccountProvider] = useState("");
@@ -68,15 +71,15 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-bold">
-            <UserCog className="size-5 text-primary" /> Edit Member
+            <UserCog className="size-5 text-primary" /> {t("title")}
           </h2>
           <Button type="submit" size="sm" disabled={saving}>
-            {saving ? <Loader2 className="animate-spin" /> : "Save"}
+            {saving ? <Loader2 className="animate-spin" /> : tc("save")}
           </Button>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-fullname">Full Name</Label>
+          <Label htmlFor="member-fullname">{t("fullNameLabel")}</Label>
           <Input
             id="member-fullname"
             value={fullName}
@@ -85,7 +88,7 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-phone">Phone Number</Label>
+          <Label htmlFor="member-phone">{t("phoneLabel")}</Label>
           <Input
             id="member-phone"
             value={phone}
@@ -95,17 +98,17 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-provider">Account Provider</Label>
+          <Label htmlFor="member-provider">{t("providerLabel")}</Label>
           <Input
             id="member-provider"
             value={accountProvider}
             onChange={(e) => setAccountProvider(e.target.value)}
-            placeholder="Telebirr, CBE, Awash Bank…"
+            placeholder={t("providerPlaceholder")}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-account">Account Number</Label>
+          <Label htmlFor="member-account">{t("accountNumberLabel")}</Label>
           <Input
             id="member-account"
             value={accountNumber}
@@ -114,24 +117,24 @@ export function MemberEditModal({ open, member, onClose, onSave, saving }: Membe
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-holder">Account Holder Name</Label>
+          <Label htmlFor="member-holder">{t("holderNameLabel")}</Label>
           <Input
             id="member-holder"
             value={accountHolderName}
             onChange={(e) => setAccountHolderName(e.target.value)}
-            placeholder="Name on the account, if different"
+            placeholder={t("holderNamePlaceholder")}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="member-contribution">Monthly Contribution (ETB, optional)</Label>
+          <Label htmlFor="member-contribution">{t("contributionLabel")}</Label>
           <Input
             id="member-contribution"
             type="number"
             min="1"
             value={contributionAmount}
             onChange={(e) => setContributionAmount(e.target.value)}
-            placeholder="Leave blank to use the equb default"
+            placeholder={t("contributionPlaceholder")}
           />
         </div>
       </form>

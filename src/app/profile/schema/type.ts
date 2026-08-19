@@ -4,6 +4,7 @@ export interface Profile {
   telegramUsername: string;
   phone: string;
   avatarUrl: string;
+  language: "en" | "am";
   createdEqubs: number;
   joinedEqubs: number;
   totalSaved: number;

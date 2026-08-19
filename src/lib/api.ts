@@ -10,6 +10,7 @@ const TOKEN_KEY = "equb_token";
 
 export type EqubStatus = "active" | "completed";
 export type EqubFrequency = "daily" | "weekly" | "monthly";
+export type PaymentCollector = "admin" | "winner";
 
 export interface Equb {
   id: string;
@@ -18,6 +19,7 @@ export interface Equb {
   totalAmount: number;
   durationMonths: number;
   frequency: EqubFrequency;
+  collector: PaymentCollector;
   maxMembers: number | null;
   inviteCode: string;
   status: EqubStatus;
@@ -97,6 +99,7 @@ export interface PaymentRow {
   amount: number;
   status: PaymentStatus;
   receiptDate: string | null;
+  receiptImageUrl: string | null;
 }
 
 export interface PayoutSplit {
@@ -114,7 +117,9 @@ export interface MonthData {
   equbId: string;
   month: number;
   amount: number;
+  collector: PaymentCollector;
   isRecipient: boolean;
+  canDecide: boolean;
   recipient: {
     memberId: string;
     fullName: string;
@@ -147,6 +152,7 @@ export interface Profile {
   telegramUsername: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  language: "en" | "am";
   createdEqubs: number;
   joinedEqubs: number;
   totalSaved: number;
@@ -285,6 +291,7 @@ export const createEqub = (data: {
   durationMonths: number;
   totalAmount: number;
   frequency?: EqubFrequency;
+  collector?: PaymentCollector;
   maxMembers?: number;
   reminderTime?: string;
   reminderDayOfWeek?: number;
@@ -300,6 +307,7 @@ export const updateEqub = (
     durationMonths?: number;
     totalAmount?: number;
     frequency?: EqubFrequency;
+    collector?: PaymentCollector;
     maxMembers?: number;
     reminderTime?: string;
     reminderDayOfWeek?: number;
@@ -381,6 +389,38 @@ export const submitPayment = (equbId: string, amount?: number) =>
     method: "POST",
     body: amount !== undefined ? { amount } : {},
   });
+export async function submitPaymentWithReceipt(
+  equbId: string,
+  file: File,
+  amount?: number,
+): Promise<object> {
+  const token = await ensureToken();
+  const form = new FormData();
+  form.append("file", file);
+  if (amount !== undefined) form.append("amount", String(amount));
+
+  const res = await fetch(`${API_BASE}/equb/${equbId}/payments/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+
+  const text = await res.text();
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = null;
+    }
+  }
+  if (!res.ok) {
+    const message =
+      (json as { message?: string } | null)?.message ?? res.statusText;
+    throw new ApiError(res.status, typeof message === "string" ? message : "Upload failed");
+  }
+  return json as object;
+}
 export const approvePaymentFor = (equbId: string, paymentId: string) =>
   apiFetch<object>(`/equb/${equbId}/payments/${paymentId}/approve`, {
     method: "POST",
@@ -404,5 +444,8 @@ export const markNotificationRead = (id: string) =>
 // ---- Profile ----
 
 export const getProfile = () => apiFetch<Profile>("/profile");
-export const updateProfile = (data: { fullName?: string; phone?: string }) =>
-  apiFetch<Profile>("/profile", { method: "PATCH", body: data });
+export const updateProfile = (data: {
+  fullName?: string;
+  phone?: string;
+  language?: "en" | "am";
+}) => apiFetch<Profile>("/profile", { method: "PATCH", body: data });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Bell, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { getNotifications, markNotificationRead } from "./schema/api";
 import type { Notification } from "./schema/type";
@@ -13,6 +14,8 @@ const colorByType = {
 } as const;
 
 export default function NotificationPage() {
+  const t = useTranslations("notification");
+  const tc = useTranslations("common");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,18 +44,18 @@ export default function NotificationPage() {
   return (
     <div className="p-4">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
       </header>
 
       {loading ? (
         <p className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Loading…
+          <Loader2 className="size-4 animate-spin" /> {tc("loading")}
         </p>
       ) : error ? (
         <p className="py-16 text-center text-sm text-muted-foreground">{error}</p>
       ) : notifications.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted-foreground">
-          No notifications yet.
+          {t("empty")}
         </p>
       ) : (
       <div className="flex flex-col gap-3">
