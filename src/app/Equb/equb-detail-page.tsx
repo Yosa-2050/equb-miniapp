@@ -555,7 +555,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                   )}
                   {isAdmin && (
                     <Button size="sm" variant="outline" onClick={() => setNotifyOpen(true)} disabled={busy}>
-                      <Megaphone /> {t("notify")}
+                      <Megaphone />
                     </Button>
                   )}
                 </div>
