@@ -412,11 +412,11 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
               </p>
               <p className="text-xs text-muted-foreground">{t("members")}</p>
             </div>
-            <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
+            {/* <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Wallet className="size-5 text-primary" />
               <p className="text-lg font-bold">{equb.totalPot.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">ETB total pot</p>
-            </div>
+            </div> */}
             <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 p-3">
               <Wallet className="size-5 text-primary" />
               <p className="text-lg font-bold">{equb.totalAmount.toLocaleString()}</p>
