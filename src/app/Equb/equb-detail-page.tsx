@@ -524,7 +524,7 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                       }}
                       disabled={busy || equb.isFull}
                     >
-                      <UserPlus /> {t("addMember")}
+                      <UserPlus />
                     </Button>
                   )}
                   {isAdmin && (
