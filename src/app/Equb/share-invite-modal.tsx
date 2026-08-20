@@ -30,7 +30,7 @@ export function ShareInviteModal({ open, onClose, equbName, inviteCode }: ShareI
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-10 flex w-full max-w-md flex-col gap-5 rounded-t-2xl border border-border bg-card p-5 shadow-lg sm:rounded-2xl">
         <div className="flex items-center justify-between">
