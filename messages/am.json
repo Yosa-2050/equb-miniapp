@@ -50,6 +50,7 @@
     "closeEqub": "እቁብ ዝጋ",
     "delete": "ሰርዝ",
     "members": "አባላት",
+    "addMember": "አባል ጨምር",
     "notify": "አሳውቅ",
     "group": "ቡድን",
     "dissolve": "ፍታ"
@@ -107,6 +108,11 @@
     "announcing": "በማሳወቅ ላይ…",
     "membersNotified": "አባላት ተነግሯቸዋል",
     "announceLive": "ቀጥታ እጣ አሳውቅ",
+    "adminPickTitle": "የአስተዳዳሪ ምርጫ ለወር 1",
+    "selectMonthOne": "የወር 1 ተቀባይ ይምረጡ",
+    "savePick": "ምርጫውን አስቀምጥ",
+    "adminPickBadge": "የአስተዳዳሪ ምርጫ",
+    "lotteryWinnerBadge": "የእጣ አሸናፊ",
     "goesTo": "የ{period} {round} ገንዘብ የሚሄደው ለ",
     "allAssigned": "ሁሉም {period}ዎች ተመድበዋል። እጣው ተጠናቋል!",
     "pressSpin": "ቀጣዩን {period} ለማውጣት እጣ ይንኩ",
@@ -176,6 +182,11 @@
     "holderNamePlaceholder": "የተለየ ከሆነ በአካውንቱ ላይ ያለው ስም",
     "contributionLabel": "ወርሃዊ መዋጮ (ብር፣ አማራጭ)",
     "contributionPlaceholder": "የእቁቡን ነባሪ መጠን ለመጠቀም ባዶ ይተዉት"
+  },
+  "memberAdd": {
+    "title": "አባል ጨምር",
+    "add": "ጨምር",
+    "telegramLabel": "የTelegram ስም (አማራጭ)"
   },
   "notifyModal": {
     "title": "አባላትን አሳውቅ",

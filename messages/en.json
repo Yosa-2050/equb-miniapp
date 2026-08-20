@@ -50,6 +50,7 @@
     "closeEqub": "Close Equb",
     "delete": "Delete",
     "members": "Members",
+    "addMember": "Add Member",
     "notify": "Notify",
     "group": "Group",
     "dissolve": "Dissolve"
@@ -107,6 +108,11 @@
     "announcing": "Announcing…",
     "membersNotified": "Members Notified",
     "announceLive": "Announce Live Lottery",
+    "adminPickTitle": "Admin's Pick for Month 1",
+    "selectMonthOne": "Select Month 1 recipient",
+    "savePick": "Save Pick",
+    "adminPickBadge": "Admin Pick",
+    "lotteryWinnerBadge": "Lottery Winner",
     "goesTo": "{period} {round} goes to",
     "allAssigned": "All {period}s have been assigned. Lottery complete!",
     "pressSpin": "Press Spin to draw the next {period}",
@@ -176,6 +182,11 @@
     "holderNamePlaceholder": "Name on the account, if different",
     "contributionLabel": "Monthly Contribution (ETB, optional)",
     "contributionPlaceholder": "Leave blank to use the equb default"
+  },
+  "memberAdd": {
+    "title": "Add Member",
+    "add": "Add",
+    "telegramLabel": "Telegram Username (optional)"
   },
   "notifyModal": {
     "title": "Notify Members",

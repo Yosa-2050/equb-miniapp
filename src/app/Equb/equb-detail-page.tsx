@@ -22,6 +22,7 @@ import {
   Loader2,
   Users2,
   UserPlus,
+  ArrowRightLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ import {
   getEqubDetail,
   getDraws,
   adminUpdateMember,
+  createManualMember,
+  swapMemberMonths,
   notifyMembers,
   removeMember,
   updateEqub,
@@ -51,11 +54,13 @@ import { periodLabel } from "@/lib/period-label";
 import { formatEthiopianDate } from "@/lib/ethiopian-calendar";
 import { ThisMonthTab } from "./this-month-tab";
 import { MemberEditModal } from "./member-edit-modal";
+import { MemberAddModal } from "./member-add-modal";
 import { NotifyMembersModal } from "./notify-members-modal";
 import { ShareInviteModal } from "./share-invite-modal";
 import { EditEqubModal } from "./edit-equb-modal";
 import { ConfirmDialog } from "./confirm-dialog";
 import { CollabGroupModal } from "./collab-group-modal";
+import { SwapMonthsModal, SwapMonthOption } from "./swap-months-modal";
 
 function initials(name: string) {
   return name
@@ -89,6 +94,8 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const [confirmClose, setConfirmClose] = useState(false);
   const [removingMember, setRemovingMember] = useState<DetailMember | null>(null);
   const [editingMember, setEditingMember] = useState<DetailMember | null>(null);
+  const [addingMember, setAddingMember] = useState(false);
+  const [addMemberError, setAddMemberError] = useState<string | null>(null);
   const [savingMember, setSavingMember] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [sendingNotify, setSendingNotify] = useState(false);
@@ -96,6 +103,9 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
   const [groupError, setGroupError] = useState<string | null>(null);
+  const [swapOpen, setSwapOpen] = useState(false);
+  const [savingSwap, setSavingSwap] = useState(false);
+  const [swapError, setSwapError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
   const reload = useCallback(() => {
@@ -150,6 +160,29 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
   for (const g of equb.collabGroups) {
     for (const id of g.memberIds) groupLabelByMemberId.set(id, g.label);
   }
+  const swapOptions: SwapMonthOption[] = [];
+  const groupedLeaderIds = new Set(equb.collabGroups.map((g) => g.leaderMemberId));
+  for (const g of equb.collabGroups) {
+    const leader = members.find((m) => m.id === g.leaderMemberId);
+    if (leader?.order && leader.order > equb.currentRound) {
+      swapOptions.push({
+        memberId: g.leaderMemberId,
+        label: g.label,
+        month: leader.order,
+      });
+    }
+  }
+  for (const member of members) {
+    if (member.collabGroupId || groupedLeaderIds.has(member.id)) continue;
+    if (member.order && member.order > equb.currentRound) {
+      swapOptions.push({
+        memberId: member.id,
+        label: member.fullName,
+        month: member.order,
+      });
+    }
+  }
+  swapOptions.sort((a, b) => a.month - b.month);
 
   const drawResults = draws?.results ?? [];
   const hasDrawn = (draws?.drawn ?? 0) > 0;
@@ -172,6 +205,31 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         setEditingMember(null);
       })
       .catch((err) => console.error("Failed to update member", err))
+      .finally(() => setSavingMember(false));
+  };
+
+  const handleAddMember = (data: {
+    fullName: string;
+    telegramUsername?: string;
+    phone?: string;
+    accountProvider?: string;
+    accountNumber?: string;
+    accountHolderName?: string;
+    contributionAmount?: number;
+  }) => {
+    setSavingMember(true);
+    setAddMemberError(null);
+    createManualMember(equbId, data)
+      .then(() => {
+        reload();
+        setAddingMember(false);
+      })
+      .catch((err) => {
+        console.error("Failed to add member", err);
+        setAddMemberError(
+          err instanceof ApiError ? err.message : "Failed to add member",
+        );
+      })
       .finally(() => setSavingMember(false));
   };
 
@@ -266,6 +324,23 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
       .then(reload)
       .catch((err) => console.error("Failed to dissolve group", err))
       .finally(() => setBusy(false));
+  };
+
+  const handleSwapMonths = (data: { memberAId: string; memberBId: string }) => {
+    setSavingSwap(true);
+    setSwapError(null);
+    swapMemberMonths(equbId, data)
+      .then(() => {
+        reload();
+        setSwapOpen(false);
+      })
+      .catch((err) => {
+        console.error("Failed to swap months", err);
+        setSwapError(
+          err instanceof ApiError ? err.message : "Failed to swap months",
+        );
+      })
+      .finally(() => setSavingSwap(false));
   };
 
   return (
@@ -444,12 +519,38 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        setAddMemberError(null);
+                        setAddingMember(true);
+                      }}
+                      disabled={busy || equb.isFull}
+                    >
+                      <UserPlus /> {t("addMember")}
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
                         setGroupError(null);
                         setGroupModalOpen(true);
                       }}
                       disabled={busy || eligibleMembers.length < 2}
                     >
                       <Users2 /> {t("group")}
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSwapError(null);
+                        setSwapOpen(true);
+                      }}
+                      disabled={busy || swapOptions.length < 2}
+                    >
+                      <ArrowRightLeft /> Swap
                     </Button>
                   )}
                   {isAdmin && (
@@ -671,6 +772,13 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         onSave={handleSaveMember}
         saving={savingMember}
       />
+      <MemberAddModal
+        open={addingMember}
+        onClose={() => setAddingMember(false)}
+        onAdd={handleAddMember}
+        saving={savingMember}
+        error={addMemberError}
+      />
       <NotifyMembersModal
         open={notifyOpen}
         onClose={() => setNotifyOpen(false)}
@@ -685,6 +793,15 @@ export function EqubDetailPage({ equbId }: { equbId: string }) {
         onCreate={handleCreateGroup}
         saving={savingGroup}
         error={groupError}
+      />
+      <SwapMonthsModal
+        open={swapOpen}
+        options={swapOptions}
+        periodLabel={label}
+        onClose={() => setSwapOpen(false)}
+        onSwap={handleSwapMonths}
+        saving={savingSwap}
+        error={swapError}
       />
       <ShareInviteModal
         open={shareOpen}

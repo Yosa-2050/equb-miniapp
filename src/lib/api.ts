@@ -78,6 +78,7 @@ export interface DrawResult {
   fullName: string;
   telegramUsername: string;
   month: number | null;
+  assignmentSource: "admin_pick" | "lottery" | null;
   isGroup?: boolean;
   groupMembers?: { memberId: string; fullName: string }[];
 }
@@ -328,6 +329,22 @@ export const removeMember = (equbId: string, memberId: string) =>
   apiFetch<{ success: boolean }>(`/equb/${equbId}/members/${memberId}`, {
     method: "DELETE",
   });
+export const createManualMember = (
+  equbId: string,
+  data: {
+    fullName: string;
+    telegramUsername?: string;
+    phone?: string;
+    accountProvider?: string;
+    accountNumber?: string;
+    accountHolderName?: string;
+    contributionAmount?: number;
+  },
+) =>
+  apiFetch<MemberRow>(`/equb/${equbId}/members`, {
+    method: "POST",
+    body: data,
+  });
 export const adminUpdateMember = (
   equbId: string,
   memberId: string,
@@ -375,9 +392,22 @@ export const getDraws = (equbId: string) =>
   apiFetch<DrawsData>(`/equb/${equbId}/lottery`);
 export const spinLottery = (equbId: string) =>
   apiFetch<DrawResult>(`/equb/${equbId}/lottery/spin`, { method: "POST" });
+export const adminPickLottery = (equbId: string, memberId: string) =>
+  apiFetch<DrawResult>(`/equb/${equbId}/lottery/admin-pick`, {
+    method: "POST",
+    body: { memberId },
+  });
 export const announceLottery = (equbId: string) =>
   apiFetch<{ notifiedCount: number }>(`/equb/${equbId}/lottery/announce`, {
     method: "POST",
+  });
+export const swapMemberMonths = (
+  equbId: string,
+  data: { memberAId: string; memberBId: string },
+) =>
+  apiFetch<{ success: boolean }>(`/equb/${equbId}/members/swap`, {
+    method: "POST",
+    body: data,
   });
 
 // ---- Payments ----

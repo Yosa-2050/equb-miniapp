@@ -12,13 +12,17 @@ import {
   Loader2,
   Radio,
   Megaphone,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   API_BASE,
   DrawResult,
   EqubFrequency,
+  adminPickLottery,
   announceLottery,
   getDraws,
   getEqubDetail,
@@ -65,6 +69,8 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
   const [loading, setLoading] = useState(true);
   const [announcing, setAnnouncing] = useState(false);
   const [announced, setAnnounced] = useState(false);
+  const [adminPickMemberId, setAdminPickMemberId] = useState("");
+  const [savingAdminPick, setSavingAdminPick] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const pendingLocalSpin = useRef(false);
@@ -137,6 +143,7 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
     () => members.filter((m) => m.month === null),
     [members],
   );
+  const hasAnyAssignment = members.some((m) => m.month !== null);
 
   const completed = N > 0 && remaining.length === 0;
 
@@ -152,6 +159,19 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
         console.error("Spin failed", err);
         pendingLocalSpin.current = false;
       });
+  };
+
+  const handleAdminPick = () => {
+    if (!adminPickMemberId || savingAdminPick || hasAnyAssignment) return;
+    setSavingAdminPick(true);
+    adminPickLottery(equbId, adminPickMemberId)
+      .then(() => getDraws(equbId))
+      .then((draws) => {
+        setMembers(draws.results);
+        setAdminPickMemberId("");
+      })
+      .catch((err) => console.error("Admin pick failed", err))
+      .finally(() => setSavingAdminPick(false));
   };
 
   const handleAnnounce = () => {
@@ -210,19 +230,54 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
         ) : (
           <>
             {isAdmin && !completed && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleAnnounce}
-                disabled={announcing || announced}
-              >
-                <Megaphone />{" "}
-                {announcing
-                  ? t("announcing")
-                  : announced
-                    ? t("membersNotified")
-                    : t("announceLive")}
-              </Button>
+              <div className="flex w-full flex-col gap-3">
+                {!hasAnyAssignment && (
+                  <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <ShieldCheck className="size-4 text-primary" />
+                      {t("adminPickTitle")}
+                    </div>
+                    <div className="flex gap-2">
+                      <Select
+                        value={adminPickMemberId}
+                        onChange={(e) => setAdminPickMemberId(e.target.value)}
+                        disabled={savingAdminPick}
+                      >
+                        <option value="">{t("selectMonthOne")}</option>
+                        {members.map((m) => (
+                          <option key={m.memberId} value={m.memberId}>
+                            {m.fullName}
+                          </option>
+                        ))}
+                      </Select>
+                      <Button
+                        variant="outline"
+                        onClick={handleAdminPick}
+                        disabled={!adminPickMemberId || savingAdminPick}
+                      >
+                        {savingAdminPick ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          t("savePick")
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleAnnounce}
+                  disabled={announcing || announced}
+                >
+                  <Megaphone />{" "}
+                  {announcing
+                    ? t("announcing")
+                    : announced
+                      ? t("membersNotified")
+                      : t("announceLive")}
+                </Button>
+              </div>
             )}
 
             {/* Wheel */}
@@ -358,9 +413,16 @@ export default function LotteryPage({ equbId }: { equbId: string }) {
                       </div>
                     </div>
                     {m.month !== null ? (
-                      <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                        {periodWord} {m.month}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                          {periodWord} {m.month}
+                        </span>
+                        <Badge variant={m.assignmentSource === "admin_pick" ? "secondary" : "outline"}>
+                          {m.assignmentSource === "admin_pick"
+                            ? t("adminPickBadge")
+                            : t("lotteryWinnerBadge")}
+                        </Badge>
+                      </div>
                     ) : (
                       <span className="shrink-0 text-xs text-muted-foreground">—</span>
                     )}
